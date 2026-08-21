@@ -144,7 +144,7 @@ After making code changes, you normally only need to rebuild and restart:
 ```bash
 cmake --build build
 ./build/simulator/sticky-lotus-simulator
-```
+```[manifest.json](../reterminal-sticky-playground-registry/integrations/sticky-lotus/firmware/1.0.1/manifest.json)
 
 nix develop is therefore just a convenient way to provide a reproducible development environment; it is not required to run the simulator if the necessary dependencies are installed locally.
 ```bash
@@ -199,9 +199,22 @@ To build and flash directly to a connected Sticky:
 
 ```bash
 cd firmware
+nix develop  //if you are using nix
 idf.py build
 idf.py -p <PORT> flash monitor
 ```
+
+
+### Generatanig merged.bin
+```bash
+cd firmware
+nix develop  //if you are using nix
+idf.py build
+idf.py merged-bin
+```
+
+generate `build/merged-binary.bin`
+
 
 ## Upstream Firmware & Credits
 

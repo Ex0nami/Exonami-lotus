@@ -135,9 +135,14 @@ void CommanderDamageScreen::processTap(
             continue;
         }
 
+        /*
+         * Muss zur Ausrichtung in drawCommanderDamageRegion() passen:
+         * dort richtet sich die Drehung nach dem Empfänger, nicht nach
+         * dem jeweils angezeigten Angreifer.
+         */
         const bool upsideDown =
             context_.renderer.isPlayerUpsideDown(
-                attackingPlayer,
+                receivingPlayer,
                 playerCount
             );
 

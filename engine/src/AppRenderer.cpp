@@ -1905,11 +1905,16 @@ namespace sticky_lotus::ui
             );
 
         /*
-         * Orientierung des tatsächlich gezeichneten Spielerfeldes.
+         * Orientierung richtet sich nach dem Empfänger, nicht nach dem
+         * jeweils angezeigten Angreifer.
+         *
+         * Der Empfänger bedient diesen Screen von seinem eigenen Platz aus
+         * und muss Zahl, Plus und Minus in jedem Feld ohne Drehung des
+         * Geräts lesen und treffen können.
          */
         const bool upsideDown =
             tableLayout_.isUpsideDown(
-                playerIndex,
+                receivingPlayer,
                 playerCount
             );
 
