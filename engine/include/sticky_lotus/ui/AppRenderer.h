@@ -201,6 +201,46 @@ namespace sticky_lotus::ui
             float rotationDegrees,
             Ink ink = Ink::Black
         );
+
+        void drawTriangleUp(
+            const Rect& area,
+            Ink ink,
+            bool upsideDown
+        );
+
+        void drawTriangleLeft(
+            const Rect& area,
+            Ink ink
+        );
+
+        void drawTriangleRight(
+            const Rect& area,
+            Ink ink
+        );
+
+        void drawGestureHints(
+            const Rect& playerArea,
+            float rotation
+        );
+
+        /**
+         * Y-Position "distanceFromOuterEdge" Pixel von der
+         * Außenkante eines Spielerfeldes entfernt.
+         *
+         * Bei normalen Spielern ist die Außenkante der untere
+         * Bildschirmrand, bei umgedrehten Spielern (obere
+         * Feldreihe) der obere Bildschirmrand.
+         *
+         * Dadurch liegen Statustexte wie "Swipe ... to save"
+         * immer Richtung Bildschirmrand statt Richtung Mitte/
+         * Menü-Button.
+         */
+        float outwardOffsetFromEdge(
+            const Rect& playerArea,
+            bool upsideDown,
+            float distanceFromOuterEdge
+        ) const;
+
         void drawMenuButton();
 
         void drawSettingsButton(

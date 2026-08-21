@@ -446,9 +446,11 @@ namespace sticky_lotus::ui
             "Swipe up or down to save",
             {
                 playerArea.x + 20.0F,
-                playerArea.y +
-                playerArea.height -
-                50.0F,
+                outwardOffsetFromEdge(
+                    playerArea,
+                    upsideDown,
+                    50.0F
+                ),
                 playerArea.width - 40.0F,
                 35.0F
             },
@@ -644,6 +646,273 @@ namespace sticky_lotus::ui
         }
     }
 
+    void AppRenderer::drawTriangleUp(
+        const Rect& area,
+        const Ink ink,
+        const bool upsideDown
+    )
+    {
+        const int height =
+            std::max(
+                1,
+                static_cast<int>(area.height)
+            );
+
+        for (int row = 0; row < height; ++row)
+        {
+            const float t =
+                height == 1
+                    ? 1.0F
+                    : static_cast<float>(row) /
+                      static_cast<float>(height - 1);
+
+            const float progress =
+                upsideDown
+                    ? 1.0F - t
+                    : t;
+
+            const float rowWidth =
+                area.width * progress;
+
+            const float rowX =
+                area.x +
+                (area.width - rowWidth) / 2.0F;
+
+            canvas_.fillRect(
+                {
+                    rowX,
+                    area.y + static_cast<float>(row),
+                    rowWidth,
+                    1.0F
+                },
+                ink
+            );
+        }
+    }
+
+    void AppRenderer::drawTriangleLeft(
+        const Rect& area,
+        const Ink ink
+    )
+    {
+        const int width =
+            std::max(
+                1,
+                static_cast<int>(area.width)
+            );
+
+        for (int column = 0; column < width; ++column)
+        {
+            const float t =
+                width == 1
+                    ? 1.0F
+                    : static_cast<float>(column) /
+                      static_cast<float>(width - 1);
+
+            const float columnHeight =
+                area.height * t;
+
+            const float columnY =
+                area.y +
+                (area.height - columnHeight) / 2.0F;
+
+            canvas_.fillRect(
+                {
+                    area.x + static_cast<float>(column),
+                    columnY,
+                    1.0F,
+                    columnHeight
+                },
+                ink
+            );
+        }
+    }
+
+    void AppRenderer::drawTriangleRight(
+        const Rect& area,
+        const Ink ink
+    )
+    {
+        const int width =
+            std::max(
+                1,
+                static_cast<int>(area.width)
+            );
+
+        for (int column = 0; column < width; ++column)
+        {
+            const float t =
+                width == 1
+                    ? 1.0F
+                    : static_cast<float>(column) /
+                      static_cast<float>(width - 1);
+
+            const float columnHeight =
+                area.height * (1.0F - t);
+
+            const float columnY =
+                area.y +
+                (area.height - columnHeight) / 2.0F;
+
+            canvas_.fillRect(
+                {
+                    area.x + static_cast<float>(column),
+                    columnY,
+                    1.0F,
+                    columnHeight
+                },
+                ink
+            );
+        }
+    }
+
+    float AppRenderer::outwardOffsetFromEdge(
+        const Rect& playerArea,
+        const bool upsideDown,
+        const float distanceFromOuterEdge
+    ) const
+    {
+        return upsideDown
+            ? playerArea.y + distanceFromOuterEdge
+            : playerArea.y +
+              playerArea.height -
+              distanceFromOuterEdge;
+    }
+
+    void AppRenderer::drawGestureHints(
+        const Rect& playerArea,
+        const float rotation
+    )
+    {
+        const bool upsideDown =
+            rotation == 180.0F;
+
+        const float centerX =
+            playerArea.x +
+            playerArea.width / 2.0F;
+
+        const float centerY =
+            playerArea.y +
+            playerArea.height / 2.0F;
+
+        /*
+         * Die Hinweiszeilen sollen immer auf der Außenseite der
+         * Zahl liegen (Richtung Bildschirmrand), nicht Richtung
+         * Bildschirmmitte/Menü-Button.
+         *
+         * Bei umgedrehten Spielern (obere Feldreihe) liegt die
+         * Außenseite auf der entgegengesetzten Seite der Feldmitte.
+         */
+        const float outwardSign =
+            upsideDown
+                ? -1.0F
+                : 1.0F;
+
+        /*
+         * Zeile 1: Poison-Hinweis (nach oben wischen).
+         *
+         * Ein einzelnes Symbol - muss wie Zahl und Text
+         * für umgedrehte Spieler gespiegelt werden.
+         */
+        const float poisonRowY =
+            centerY + outwardSign * 58.0F;
+
+        drawTriangleUp(
+            {
+                centerX - 37.5F,
+                poisonRowY - 5.5F,
+                11.0F,
+                11.0F
+            },
+            Ink::DarkGray,
+            upsideDown
+        );
+
+        /*
+         * Center statt Left-Alignment: die Textbreite von
+         * "POISON" wird hier nicht exakt gemessen (kein
+         * Zugriff auf die Font-Metriken von AppRenderer aus).
+         *
+         * Bei Center-Alignment bleibt der Text unabhängig von
+         * der tatsächlichen Breite symmetrisch um seine eigene
+         * Boxmitte - und spiegelt bei 180 Grad exakt um dieselbe
+         * Mitte zurück. Kein Risiko, dass er über den Bildschirm-
+         * rand hinaus gespiegelt wird, selbst wenn die geschätzte
+         * Box-Breite nicht exakt stimmt.
+         *
+         * Text liegt jetzt exakt unter der Lebenszahl (Center bei
+         * centerX), das Dreieck sitzt links davon.
+         */
+        canvas_.drawText(
+            "POISON",
+            {
+                centerX - 50.0F,
+                poisonRowY - 9.0F,
+                100.0F,
+                18.0F
+            },
+            14,
+            Ink::DarkGray,
+            TextAlignment::Center,
+            rotation
+        );
+
+        /*
+         * Zeile 2: Commander-Damage-Hinweis (seitlich wischen).
+         *
+         * Die beiden Dreiecke bleiben unabhängig von der
+         * Spielerausrichtung immer gleich: Ein links-rechts-
+         * symmetrisches Paar sieht nach einer 180-Grad-Drehung
+         * wieder identisch aus - anders als das einzelne
+         * Poison-Symbol oben.
+         */
+        const float damageRowY =
+            centerY + outwardSign * 83.0F;
+
+        drawTriangleLeft(
+            {
+                centerX - 93.5F,
+                damageRowY - 5.5F,
+                11.0F,
+                11.0F
+            },
+            Ink::DarkGray
+        );
+
+        /*
+         * Großzügiger Breitenpuffer statt knapper Schätzung -
+         * siehe Kommentar bei "POISON" oben. "COMMANDERDAMAGE"
+         * lief vorher rechts über seine zu schmale Box hinaus,
+         * was sich bei den umgedrehten Feldern als Textmüll
+         * links über den Bildschirmrand hinaus gespiegelt hat.
+         *
+         * Ebenfalls exakt unter der Lebenszahl zentriert.
+         */
+        canvas_.drawText(
+            "COMMANDERDAMAGE",
+            {
+                centerX - 90.0F,
+                damageRowY - 9.0F,
+                180.0F,
+                18.0F
+            },
+            14,
+            Ink::DarkGray,
+            TextAlignment::Center,
+            rotation
+        );
+
+        drawTriangleRight(
+            {
+                centerX + 82.5F,
+                damageRowY - 5.5F,
+                11.0F,
+                11.0F
+            },
+            Ink::DarkGray
+        );
+    }
+
     void AppRenderer::drawPlayer(
         const GameState& game,
         const std::size_t playerIndex,
@@ -749,8 +1018,26 @@ namespace sticky_lotus::ui
                 rotation
             );
 
+            drawGestureHints(
+                playerArea,
+                rotation
+            );
+
             return;
         }
+
+        /*
+         * "Game Over" bleibt immer inward (Richtung Mitte/Menü-
+         * Button), die Ursache darunter immer outward (Richtung
+         * Bildschirmrand) - unabhängig von der Ausrichtung.
+         *
+         * Ohne dieses Vorzeichen tauschen Überschrift und Ursache
+         * bei umgedrehten Spielern relativ die Seite.
+         */
+        const float eliminationOutwardSign =
+            upsideDown
+                ? -1.0F
+                : 1.0F;
 
         canvas_.drawText(
             player.deathMessage.empty()
@@ -760,7 +1047,7 @@ namespace sticky_lotus::ui
                 playerArea.x + 20.0F,
                 playerArea.y +
                 playerArea.height / 2.0F -
-                20.0F,
+                eliminationOutwardSign * 20.0F,
                 playerArea.width - 40.0F,
                 50.0F
             },
@@ -779,7 +1066,7 @@ namespace sticky_lotus::ui
                     playerArea.x + 20.0F,
                     playerArea.y +
                     playerArea.height / 2.0F +
-                    12.0F,
+                    eliminationOutwardSign * 12.0F,
                     playerArea.width - 40.0F,
                     30.0F
                 },
@@ -797,7 +1084,7 @@ namespace sticky_lotus::ui
                     playerArea.x + 20.0F,
                     playerArea.y +
                     playerArea.height / 2.0F +
-                    20.0F,
+                    eliminationOutwardSign * 20.0F,
                     playerArea.width - 40.0F,
                     55.0F
                 },
@@ -815,7 +1102,7 @@ namespace sticky_lotus::ui
                     playerArea.x + 20.0F,
                     playerArea.y +
                     playerArea.height / 2.0F +
-                    25.0F,
+                    eliminationOutwardSign * 25.0F,
                     playerArea.width - 40.0F,
                     40.0F
                 },
@@ -1348,7 +1635,7 @@ namespace sticky_lotus::ui
          * Version
          */
         canvas_.drawText(
-            "v1.0",
+            "v1.1",
             {
                 brandingX,
                 cooppunksLogoArea.y +
@@ -1970,9 +2257,11 @@ namespace sticky_lotus::ui
                     "LETHAL",
                     {
                         playerArea.x + 20.0F,
-                        playerArea.y +
-                        playerArea.height -
-                        55.0F,
+                        outwardOffsetFromEdge(
+                            playerArea,
+                            upsideDown,
+                            55.0F
+                        ),
                         playerArea.width - 40.0F,
                         35.0F
                     },
@@ -2002,7 +2291,18 @@ namespace sticky_lotus::ui
                     "COMMANDER DAMAGE",
                     {
                         playerArea.x + 20.0F,
-                        playerArea.y + 72.0F,
+                        /*
+                         * Bewusst "inward" (Richtung Mitte/
+                         * Menü-Button) - die Überschrift bleibt
+                         * damit für beide Ausrichtungen auf
+                         * derselben relativen Seite wie der
+                         * Hinweistext unten (outward).
+                         */
+                        outwardOffsetFromEdge(
+                            playerArea,
+                            !upsideDown,
+                            72.0F
+                        ),
                         playerArea.width - 40.0F,
                         35.0F
                     },
@@ -2016,9 +2316,11 @@ namespace sticky_lotus::ui
                     "Swipe left or right to save",
                     {
                         playerArea.x + 20.0F,
-                        playerArea.y +
-                        playerArea.height -
-                        70.0F,
+                        outwardOffsetFromEdge(
+                            playerArea,
+                            upsideDown,
+                            70.0F
+                        ),
                         playerArea.width - 40.0F,
                         35.0F
                     },
@@ -2124,7 +2426,16 @@ namespace sticky_lotus::ui
             ),
             {
                 playerArea.x + 12.0F,
-                playerArea.y + 10.0F,
+                /*
+                 * Inward wie die COMMANDER-DAMAGE-Überschrift
+                 * oben - bleibt dadurch für beide Ausrichtungen
+                 * auf derselben relativen Seite des Feldes.
+                 */
+                outwardOffsetFromEdge(
+                    playerArea,
+                    !upsideDown,
+                    10.0F
+                ),
                 40.0F,
                 28.0F
             },
