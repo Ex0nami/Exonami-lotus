@@ -11,7 +11,13 @@
 namespace {
 
 constexpr const char* kTag = "Ssd1677";
-constexpr int kMaxPartialRefreshesBeforeFull = 20;
+/*
+ * Höher = seltenere erzwungene Full-Refreshes (weniger Flashes),
+ * aber mehr Zeit für Ghosting-Aufbau zwischen den Full-Refreshes.
+ *
+ * Muss am echten Panel beobachtet und ggf. weiter angepasst werden.
+ */
+constexpr int kMaxPartialRefreshesBeforeFull = 40;
 constexpr uint8_t kDisplayUpdateCtrl1Differential[] = {0x00, 0x00};
 constexpr uint8_t kDisplayUpdateCtrl1Full[] = {0x40, 0x00};
 constexpr uint8_t kDisplayUpdateCtrl2Full = 0xF7;
@@ -205,9 +211,19 @@ esp_err_t EpaperPanel::RefreshFullBase()
     return ESP_OK;
 }
 
+bool EpaperPanel::NeedsFullRefreshSoon() const
+{
+    return !CanPartialRefresh(kMaxPartialRefreshesBeforeFull);
+}
+
 esp_err_t EpaperPanel::RefreshPartialFullScreen()
 {
-    if (!CanPartialRefresh(kMaxPartialRefreshesBeforeFull)) {
+    // Nur noch die harte Voraussetzung (gültiges Basisbild) erzwingt hier einen
+    // Full-Refresh. Das Ghosting-Schutz-Budget (partial_refresh_count_ vs.
+    // kMaxPartialRefreshesBeforeFull) eskaliert absichtlich NICHT mehr selbst -
+    // siehe NeedsFullRefreshSoon(). Der Aufrufer entscheidet, wann der fällige
+    // Full-Refresh tatsächlich ausgelöst wird (z.B. erst nach einer Eingabepause).
+    if (RequiresBaseRefresh()) {
         return RefreshFullBase();
     }
     if (framebuffer_ == nullptr || previous_framebuffer_ == nullptr) {

@@ -137,5 +137,22 @@ namespace sticky_lotus_sticky
         /** Zeit die gewartet wird bis die Eingabe ausgeführt wird.
          * **/
         static constexpr std::int64_t refreshDelayUs = 0;
+
+        /*
+         * Ein wegen des Ghosting-Schutz-Budgets fälliger Full-Refresh
+         * wird nicht sofort ausgeführt, sondern erst nach einer
+         * Eingabepause - siehe serviceRefresh().
+         */
+        bool fullRefreshDeferred_ = false;
+
+        /**
+         * Wartezeit ohne neue Eingabe, bevor ein fälliger
+         * Full-Refresh tatsächlich ausgelöst wird.
+         *
+         * Jede neue Eingabe setzt lastFrameChangeTimeUs_ zurück und
+         * verschiebt den fälligen Full-Refresh damit erneut.
+         */
+        static constexpr std::int64_t fullRefreshIdleDelayUs =
+            10'000'000;
     };
 } // namespace sticky_lotus_sticky

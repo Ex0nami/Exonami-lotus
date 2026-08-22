@@ -574,16 +574,65 @@ namespace sticky_lotus_sticky
 
     void StickyCanvas::serviceRefresh()
     {
-
-        if (!refreshPending_)
+        if (refreshPending_)
         {
+            if (
+                esp_timer_get_time() -
+                lastFrameChangeTimeUs_ <
+                refreshDelayUs
+            )
+            {
+                return;
+            }
+
+            ESP_LOGI(
+                logTag,
+                "Refreshing coalesced Sticky Lotus framebuffer"
+            );
+
+            const esp_err_t result =
+                panel_.RefreshChangedRegion();
+
+            if (result != ESP_OK)
+            {
+                ESP_LOGE(
+                    logTag,
+                    "Coalesced E-paper refresh failed: %s",
+                    esp_err_to_name(result)
+                );
+
+                return;
+            }
+
+            refreshPending_ = false;
+
+            /*
+             * Ghosting-Schutz-Budget aufgebraucht: den fälligen
+             * Full-Refresh vormerken, aber nicht sofort mitten in
+             * einer Tap-Serie auslösen. Das übernimmt der Zweig
+             * unten, sobald wirklich Ruhe eingekehrt ist.
+             */
+            if (panel_.NeedsFullRefreshSoon())
+            {
+                fullRefreshDeferred_ = true;
+            }
+
             return;
         }
 
+        /*
+         * Nichts Neues zu zeichnen - aber evtl. ist noch ein
+         * Full-Refresh fällig. Erst auslösen, wenn seit der
+         * letzten Eingabe wirklich Ruhe herrscht. Jede neue
+         * Eingabe setzt lastFrameChangeTimeUs_ zurück (über
+         * flush()) und verschiebt diesen Zeitpunkt dadurch
+         * automatisch erneut.
+         */
         if (
+            !fullRefreshDeferred_ ||
             esp_timer_get_time() -
             lastFrameChangeTimeUs_ <
-            refreshDelayUs
+            fullRefreshIdleDelayUs
         )
         {
             return;
@@ -591,25 +640,24 @@ namespace sticky_lotus_sticky
 
         ESP_LOGI(
             logTag,
-            "Refreshing coalesced Sticky Lotus framebuffer"
+            "Running deferred full E-paper refresh after idle period"
         );
 
         const esp_err_t result =
-            panel_.RefreshChangedRegion();
+            panel_.RefreshFull();
 
         if (result != ESP_OK)
         {
             ESP_LOGE(
                 logTag,
-                "Coalesced E-paper refresh failed: %s",
+                "Deferred full E-paper refresh failed: %s",
                 esp_err_to_name(result)
             );
 
             return;
         }
 
-        refreshPending_ = false;
-
+        fullRefreshDeferred_ = false;
     }
 
     void StickyCanvas::flushImmediately()
@@ -643,6 +691,13 @@ namespace sticky_lotus_sticky
 
         dirty_ = false;
         refreshPending_ = false;
+
+        /*
+         * RefreshFull() hat das Ghosting-Schutz-Budget bereits
+         * zurückgesetzt - ein noch vorgemerkter Full-Refresh ist
+         * damit hinfällig.
+         */
+        fullRefreshDeferred_ = false;
     }
 
     void StickyCanvas::drawMonochromeBitmap(

@@ -68,6 +68,18 @@ public:
     bool RequiresBaseRefresh() const;
     bool CanPartialRefresh(int max_partial_refreshes) const;
 
+    /*
+     * true, sobald das Ghosting-Schutz-Budget an Partial-Refreshes
+     * aufgebraucht ist.
+     *
+     * RefreshPartialFullScreen() eskaliert dafür NICHT mehr selbst
+     * auf einen Full-Refresh - das entscheidet der Aufrufer (z.B.
+     * StickyCanvas), der genug Kontext hat, den Full-Refresh auf
+     * eine Eingabepause zu verschieben statt ihn mitten in eine
+     * Tap-Serie zu legen.
+     */
+    bool NeedsFullRefreshSoon() const;
+
 private:
     esp_err_t InitSpiPort();
     esp_err_t InitGpio();

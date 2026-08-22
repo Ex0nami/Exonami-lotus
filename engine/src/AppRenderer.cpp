@@ -2099,6 +2099,12 @@ namespace sticky_lotus::ui
             return;
         }
 
+        const Rect playerArea =
+            tableLayout_.playerArea(
+                playerIndex,
+                playerCount
+            );
+
         const Rect lifeArea =
             tableLayout_.counterArea(
                 playerIndex,
@@ -2117,6 +2123,11 @@ namespace sticky_lotus::ui
         /*
          * Nur einen etwas kleineren inneren Bereich löschen.
          * Dadurch bleiben die Trennlinien der Spielerfelder erhalten.
+         *
+         * lifeArea deckt die komplette Feldhöhe ab (nicht nur die
+         * sichtbare Zahl), also auch den Bereich der Gesten-Hinweise
+         * darunter/darüber - die werden hier also mitgelöscht und
+         * müssen deshalb unten explizit neu gezeichnet werden.
          */
         constexpr float horizontalInset = 10.0F;
         constexpr float verticalInset = 8.0F;
@@ -2154,10 +2165,22 @@ namespace sticky_lotus::ui
         );
 
         /*
-         * Nur den tatsächlich veränderten Bereich markieren.
+         * Wurden vom fillRect() oben mitgelöscht - müssen bei
+         * jedem Life-Update neu gezeichnet werden.
+         */
+        drawGestureHints(
+            playerArea,
+            rotation
+        );
+
+        /*
+         * Muss das komplette Spielerfeld abdecken, nicht nur
+         * lifeRedrawArea - sonst wird der Refresh für die
+         * Gesten-Hinweise auf echter Hardware nicht ausgelöst,
+         * auch wenn der Framebuffer bereits korrekt ist.
          */
         canvas_.invalidate(
-            lifeRedrawArea
+            playerArea
         );
 
         canvas_.flush();
