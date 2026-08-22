@@ -246,12 +246,15 @@ namespace sticky_lotus::ui
 
         /*
          * Breite für den Zahlenbereich.
+         *
+         * Groß genug für die Zahl in derselben Schriftgröße (90)
+         * wie im Lebenscounter auf dem Game-Screen.
          */
         constexpr float poisonNumberWidth =
-            70.0F;
+            130.0F;
 
         constexpr float poisonNumberHeight =
-            60.0F;
+            100.0F;
         constexpr float poisonLethalGap =
             14.0F;
 
@@ -413,20 +416,7 @@ namespace sticky_lotus::ui
                 )
             ),
             poisonNumberArea,
-            42,
-            Ink::Black,
-            TextAlignment::Center,
-            rotation
-        );
-
-        canvas_.drawText(
-            std::to_string(
-                game.getPoison(
-                    selectedPlayer
-                )
-            ),
-            poisonNumberArea,
-            42,
+            90,
             Ink::Black,
             TextAlignment::Center,
             rotation
@@ -2419,7 +2409,7 @@ namespace sticky_lotus::ui
                 )
             ),
             damageArea,
-            76,
+            90,
             Ink::Black,
             TextAlignment::Center,
             rotation
