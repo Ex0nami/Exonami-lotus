@@ -432,23 +432,43 @@ namespace sticky_lotus::ui
             TextAlignment::Center,
             rotation
         );
-        canvas_.drawText(
-            "Swipe up or down to save",
-            {
-                playerArea.x + 20.0F,
+        {
+            const float swipeHintCenterX =
+                playerArea.x +
+                playerArea.width / 2.0F;
+
+            const float swipeHintY =
                 outwardOffsetFromEdge(
                     playerArea,
                     upsideDown,
                     50.0F
-                ),
-                playerArea.width - 40.0F,
-                35.0F
-            },
-            20,
-            Ink::DarkGray,
-            TextAlignment::Center,
-            rotation
-        );
+                );
+
+            drawTriangleDown(
+                {
+                    swipeHintCenterX - 125.0F,
+                    swipeHintY + 10.5F,
+                    14.0F,
+                    14.0F
+                },
+                Ink::DarkGray,
+                upsideDown
+            );
+
+            canvas_.drawText(
+                "Swipe down to save",
+                {
+                    swipeHintCenterX - 95.0F,
+                    swipeHintY,
+                    230.0F,
+                    35.0F
+                },
+                20,
+                Ink::DarkGray,
+                TextAlignment::Center,
+                rotation
+            );
+        }
         /*
          * Batterie und Menübutton nach dem partiellen
          * Redraw wieder über das Spielerfeld legen.
@@ -678,6 +698,24 @@ namespace sticky_lotus::ui
                 ink
             );
         }
+    }
+
+    void AppRenderer::drawTriangleDown(
+        const Rect& area,
+        const Ink ink,
+        const bool upsideDown
+    )
+    {
+        /*
+         * Spiegelbild von drawTriangleUp(): Spitze normalerweise
+         * unten, bei umgedrehten Spielern oben - daher dieselbe
+         * Logik mit invertiertem Flag.
+         */
+        drawTriangleUp(
+            area,
+            ink,
+            !upsideDown
+        );
     }
 
     void AppRenderer::drawTriangleLeft(
@@ -2357,23 +2395,51 @@ namespace sticky_lotus::ui
                     rotation
                 );
 
-                canvas_.drawText(
-                    "Swipe left or right to save",
-                    {
-                        playerArea.x + 20.0F,
+                {
+                    const float swipeHintY =
                         outwardOffsetFromEdge(
                             playerArea,
                             upsideDown,
                             70.0F
-                        ),
-                        playerArea.width - 40.0F,
-                        35.0F
-                    },
-                    20,
-                    Ink::DarkGray,
-                    TextAlignment::Center,
-                    rotation
-                );
+                        );
+
+                    drawTriangleLeft(
+                        {
+                            playerArea.x + 20.0F,
+                            swipeHintY + 10.5F,
+                            14.0F,
+                            14.0F
+                        },
+                        Ink::DarkGray
+                    );
+
+                    canvas_.drawText(
+                        "Swipe left or right to save",
+                        {
+                            playerArea.x + 40.0F,
+                            swipeHintY,
+                            playerArea.width - 80.0F,
+                            35.0F
+                        },
+                        20,
+                        Ink::DarkGray,
+                        TextAlignment::Center,
+                        rotation
+                    );
+
+                    drawTriangleRight(
+                        {
+                            playerArea.x +
+                            playerArea.width -
+                            34.0F,
+
+                            swipeHintY + 10.5F,
+                            14.0F,
+                            14.0F
+                        },
+                        Ink::DarkGray
+                    );
+                }
             }
 
             /*

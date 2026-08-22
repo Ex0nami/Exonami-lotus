@@ -211,6 +211,12 @@ namespace sticky_lotus::ui
             bool upsideDown
         );
 
+        void drawTriangleDown(
+            const Rect& area,
+            Ink ink,
+            bool upsideDown
+        );
+
         void drawTriangleLeft(
             const Rect& area,
             Ink ink
