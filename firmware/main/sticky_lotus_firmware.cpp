@@ -155,6 +155,47 @@ namespace sticky_lotus_firmware
         }
 
         /**
+         * Konfiguriert die untere Taste (Down) als
+         * digitalen Eingang.
+         *
+         * Löst "Roll Start" aus - siehe Hauptschleife.
+         */
+        esp_err_t configureDownButton()
+        {
+            gpio_config_t config{};
+
+            config.pin_bit_mask =
+                1ULL << STICKY_BUTTON_DOWN_PIN;
+
+            config.mode =
+                GPIO_MODE_INPUT;
+
+            config.pull_up_en =
+                GPIO_PULLUP_ENABLE;
+
+            config.pull_down_en =
+                GPIO_PULLDOWN_DISABLE;
+
+            config.intr_type =
+                GPIO_INTR_DISABLE;
+
+            return gpio_config(
+                &config
+            );
+        }
+
+        /**
+         * Prüft, ob die untere Taste aktuell
+         * gedrückt ist.
+         */
+        bool isDownButtonPressed()
+        {
+            return gpio_get_level(
+                STICKY_BUTTON_DOWN_PIN
+            ) == 0;
+        }
+
+        /**
          * Spielstand in NVS speichern.
          */
         esp_err_t saveGameState(
@@ -457,6 +498,15 @@ namespace sticky_lotus_firmware
         );
 
         /*
+         * Untere Taste (Roll Start) konfigurieren.
+         */
+        ESP_RETURN_ON_ERROR(
+            configureDownButton(),
+            logTag,
+            "Could not configure down button"
+        );
+
+        /*
          * Anzeigen, wodurch das Gerät gestartet wurde.
          */
         const esp_sleep_wakeup_cause_t wakeupCause =
@@ -637,6 +687,16 @@ namespace sticky_lotus_firmware
         bool previousPowerButtonPressed =
             isPowerButtonPressed();
 
+        /*
+         * Zeitpunkt, seit dem die Power-Taste ununterbrochen
+         * gedrückt gehalten wird. 0 bedeutet: nicht gedrückt.
+         */
+        std::int64_t powerButtonPressStartUs =
+            0;
+
+        bool previousDownButtonPressed =
+            isDownButtonPressed();
+
         while (true)
         {
             /*
@@ -667,16 +727,31 @@ namespace sticky_lotus_firmware
 
             /*
              * Power-Taste in jedem Schleifendurchlauf prüfen.
+             *
+             * Erst nach kontinuiertem powerButtonHoldUs-Halten
+             * auslösen, um versehentliches Auslösen beim
+             * Greifen/Bedienen des Geräts zu vermeiden.
              */
+            constexpr std::int64_t powerButtonHoldUs =
+                1LL * 1'000'000LL;
+
             const bool powerButtonPressed =
                 isPowerButtonPressed();
 
-            /*
-             * Nur auf die neue Druckflanke reagieren.
-             */
             if (
                 powerButtonPressed &&
                 !previousPowerButtonPressed
+            )
+            {
+                powerButtonPressStartUs =
+                    esp_timer_get_time();
+            }
+
+            if (
+                powerButtonPressed &&
+                powerButtonPressStartUs != 0 &&
+                esp_timer_get_time() - powerButtonPressStartUs >=
+                powerButtonHoldUs
             )
             {
                 enterDeepSleep(
@@ -686,8 +761,32 @@ namespace sticky_lotus_firmware
                 );
             }
 
+            if (!powerButtonPressed)
+            {
+                powerButtonPressStartUs =
+                    0;
+            }
+
             previousPowerButtonPressed =
                 powerButtonPressed;
+
+            /*
+             * Untere Taste: "Roll Start" - reagiert bewusst nur
+             * auf die Druckflanke, unabhängig vom aktuellen Screen.
+             */
+            const bool downButtonPressed =
+                isDownButtonPressed();
+
+            if (
+                downButtonPressed &&
+                !previousDownButtonPressed
+            )
+            {
+                application.rollStartingPlayer();
+            }
+
+            previousDownButtonPressed =
+                downButtonPressed;
 
             const std::int64_t currentTime =
                 esp_timer_get_time();

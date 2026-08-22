@@ -79,6 +79,24 @@ namespace sticky_lotus::app {
         );
     }
 
+    void Application::rollStartingPlayer()
+    {
+        lastInputTime_ =
+            std::chrono::steady_clock::now();
+
+        game_.rollStartingPlayer();
+
+        navigation_.showGame();
+
+        /*
+         * processScreenTransition() erkennt den Screenwechsel und
+         * übernimmt onEnter/onExit sowie den vollständigen Redraw
+         * inklusive Flush - derselbe Weg wie bei jeder anderen
+         * Navigation.
+         */
+        screenManager_.draw();
+    }
+
     void Application::draw()
     {
         screenManager_.draw();

@@ -37,6 +37,15 @@ namespace sticky_lotus::app
          */
         void checkTimeouts();
 
+        /**
+         * Würfelt einen Startspieler aus und wechselt zum
+         * Game-Screen, um ihn hervorzuheben.
+         *
+         * Für die physische untere Taste gedacht - wirkt bewusst
+         * bildschirmunabhängig, genau wie der Power-Button.
+         */
+        void rollStartingPlayer();
+
         void draw();
 
         void setBatteryStatus(
