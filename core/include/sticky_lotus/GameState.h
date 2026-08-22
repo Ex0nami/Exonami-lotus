@@ -135,6 +135,24 @@ public:
     ) const;
 
     /*
+     * Würfelt zufällig einen Startspieler unter den aktuell
+     * aktiven Spielern aus und merkt ihn für die Hervorhebung
+     * auf dem Game-Screen vor.
+     *
+     * Bewusst nicht Teil von GameSnapshot - reine, kurzlebige
+     * UI-Rückmeldung, kein dauerhafter Spielzustand.
+     */
+    void rollStartingPlayer();
+
+    [[nodiscard]]
+    bool hasStartingPlayerHighlight() const;
+
+    [[nodiscard]]
+    std::size_t getStartingPlayerHighlight() const;
+
+    void clearStartingPlayerHighlight();
+
+    /*
      * Deep-Sleep-Unterstützung
      */
     [[nodiscard]]
@@ -151,6 +169,9 @@ private:
         Player,
         maximumPlayerCount
     > players_;
+
+    bool hasStartingPlayerHighlight_ = false;
+    std::size_t startingPlayerHighlight_ = 0;
 
     /*
      * Erster Index:

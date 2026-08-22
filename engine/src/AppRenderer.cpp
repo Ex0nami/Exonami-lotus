@@ -964,9 +964,19 @@ namespace sticky_lotus::ui
             eliminationReason !=
             EliminationReason::None;
 
+        /*
+         * Kurzzeitige Hervorhebung des per "Roll Start"
+         * ausgewürfelten Startspielers.
+         */
+        const bool startingPlayerHighlighted =
+            !eliminated &&
+            game.hasStartingPlayerHighlight() &&
+            game.getStartingPlayerHighlight() ==
+            playerIndex;
+
         canvas_.fillRect(
             playerArea,
-            eliminated
+            eliminated || startingPlayerHighlighted
                 ? Ink::LightGray
                 : Ink::White
         );
@@ -1540,6 +1550,12 @@ namespace sticky_lotus::ui
         );
 
         drawSettingsButton(
+            getRollStartButtonRectangle(),
+            "Roll Start",
+            false
+        );
+
+        drawSettingsButton(
             getDoneButtonRectangle(),
             "Done",
             true
@@ -1780,6 +1796,22 @@ namespace sticky_lotus::ui
             70.0F,
             390.0F,
             170.0F,
+            42.0F
+        };
+    }
+
+    Rect AppRenderer::getRollStartButtonRectangle() const
+    {
+        /*
+         * Zentriert in der Lücke zwischen Reset (endet bei 240)
+         * und Done (beginnt bei 560) - breiter als die übrigen
+         * Footer-Buttons, damit "Roll Start" bei Schriftgröße 24
+         * bequem passt.
+         */
+        return {
+            265.0F,
+            390.0F,
+            270.0F,
             42.0F
         };
     }

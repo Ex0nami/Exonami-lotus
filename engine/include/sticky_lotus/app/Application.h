@@ -8,6 +8,8 @@
 #include "sticky_lotus/ui/Canvas.h"
 #include "sticky_lotus/commander/CommanderDamageDraft.h"
 
+#include <chrono>
+
 namespace sticky_lotus::app
 {
     /**
@@ -25,6 +27,15 @@ namespace sticky_lotus::app
          * Verarbeitet einen vollständigen Anwendungsdurchlauf.
          */
         void tick();
+
+        /**
+         * Muss unabhängig von Eingaben regelmäßig aufgerufen werden
+         * (z.B. aus der Hauptschleife neben canvas.serviceRefresh()).
+         *
+         * Hebt die "Roll Start"-Hervorhebung auf, sobald seit der
+         * letzten Eingabe 10 Sekunden ohne Aktivität vergangen sind.
+         */
+        void checkTimeouts();
 
         void draw();
 
@@ -48,5 +59,8 @@ namespace sticky_lotus::app
 
         ui::AppRenderer renderer_;
         screens::ScreenManager screenManager_;
+
+        std::chrono::steady_clock::time_point lastInputTime_ =
+            std::chrono::steady_clock::now();
     };
 } // namespace sticky_lotus::app

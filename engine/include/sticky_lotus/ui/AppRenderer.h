@@ -87,6 +87,9 @@ namespace sticky_lotus::ui
         Rect getResetButtonRectangle() const;
 
         [[nodiscard]]
+        Rect getRollStartButtonRectangle() const;
+
+        [[nodiscard]]
         Rect getDoneButtonRectangle() const;
 
         [[nodiscard]]

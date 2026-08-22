@@ -229,6 +229,18 @@ namespace sticky_lotus::screens
 
         if (
             renderer
+            .getRollStartButtonRectangle()
+            .contains(position)
+        )
+        {
+            context_.game.rollStartingPlayer();
+
+            context_.navigation.showGame();
+            return;
+        }
+
+        if (
+            renderer
             .getDoneButtonRectangle()
             .contains(position)
         )

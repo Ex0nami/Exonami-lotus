@@ -33,6 +33,7 @@ int main()
      */
     while (!canvas.shouldClose()) {
         application.tick();
+        application.checkTimeouts();
 
         canvas.beginFrame();
         application.draw();

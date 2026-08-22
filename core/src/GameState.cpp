@@ -2,11 +2,14 @@
 #include "sticky_lotus/DeathMessageGenerator.h"
 
 #include <algorithm>
+#include <random>
 
 namespace sticky_lotus
 {
     namespace
     {
+        std::mt19937 rng{std::random_device{}()};
+
         Player createPlayer(
             const char* name
         )
@@ -358,6 +361,36 @@ namespace sticky_lotus
         }
 
         return players_[playerIndex].poison;
+    }
+
+    void GameState::rollStartingPlayer()
+    {
+        std::uniform_int_distribution<std::size_t> dist(
+            0,
+            getPlayerCount() - 1
+        );
+
+        startingPlayerHighlight_ =
+            dist(rng);
+
+        hasStartingPlayerHighlight_ =
+            true;
+    }
+
+    bool GameState::hasStartingPlayerHighlight() const
+    {
+        return hasStartingPlayerHighlight_;
+    }
+
+    std::size_t GameState::getStartingPlayerHighlight() const
+    {
+        return startingPlayerHighlight_;
+    }
+
+    void GameState::clearStartingPlayerHighlight()
+    {
+        hasStartingPlayerHighlight_ =
+            false;
     }
 
     GameSnapshot GameState::createSnapshot() const

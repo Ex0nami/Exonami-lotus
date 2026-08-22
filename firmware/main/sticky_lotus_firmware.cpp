@@ -744,6 +744,12 @@ namespace sticky_lotus_firmware
             }
 
             /*
+             * Hebt z.B. die "Roll Start"-Hervorhebung auf, sobald
+             * lange genug keine Eingabe mehr kam.
+             */
+            application.checkTimeouts();
+
+            /*
              * Vorgemerkten E-Paper-Refresh durchführen,
              * sobald die konfigurierte Ruhezeit abgelaufen ist.
              */

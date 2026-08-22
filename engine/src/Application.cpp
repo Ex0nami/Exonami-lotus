@@ -24,19 +24,61 @@ namespace sticky_lotus::app {
         const input::InputFrame input =
             input_.poll();
 
-        if (
+        const bool hasInput =
             input.gesture.gesture !=
                 input::TouchGesture::None ||
             input.buttons.leftPressed ||
             input.buttons.centerPressed ||
             input.buttons.rightPressed ||
-            input.cancelPressed
-        ) {
-            screenManager_.handleInput(
-                input
-            );
+            input.cancelPressed;
+
+        if (!hasInput) {
+            return;
         }
+
+        lastInputTime_ =
+            std::chrono::steady_clock::now();
+
+        screenManager_.handleInput(
+            input
+        );
     }
+
+    void Application::checkTimeouts()
+    {
+        if (!game_.hasStartingPlayerHighlight()) {
+            return;
+        }
+
+        /*
+         * Nur relevant, während der Game-Screen tatsächlich
+         * sichtbar ist - ein regionaler Redraw auf einem anderen
+         * Screen würde dessen Inhalt beschädigen.
+         */
+        if (navigation_.currentScreen() != ScreenId::Game) {
+            return;
+        }
+
+        constexpr std::chrono::seconds highlightTimeout{10};
+
+        if (
+            std::chrono::steady_clock::now() - lastInputTime_ <
+            highlightTimeout
+        ) {
+            return;
+        }
+
+        const std::size_t highlightedPlayer =
+            game_.getStartingPlayerHighlight();
+
+        game_.clearStartingPlayerHighlight();
+
+        renderer_.drawPlayerRegion(
+            game_,
+            highlightedPlayer
+        );
+    }
+
     void Application::draw()
     {
         screenManager_.draw();
