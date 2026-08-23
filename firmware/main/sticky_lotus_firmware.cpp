@@ -196,6 +196,48 @@ namespace sticky_lotus_firmware
         }
 
         /**
+         * Konfiguriert die mittlere Taste (Up) als
+         * digitalen Eingang.
+         *
+         * Setzt bei 3s Halten das Spiel zurück -
+         * siehe Hauptschleife.
+         */
+        esp_err_t configureUpButton()
+        {
+            gpio_config_t config{};
+
+            config.pin_bit_mask =
+                1ULL << STICKY_BUTTON_UP_PIN;
+
+            config.mode =
+                GPIO_MODE_INPUT;
+
+            config.pull_up_en =
+                GPIO_PULLUP_ENABLE;
+
+            config.pull_down_en =
+                GPIO_PULLDOWN_DISABLE;
+
+            config.intr_type =
+                GPIO_INTR_DISABLE;
+
+            return gpio_config(
+                &config
+            );
+        }
+
+        /**
+         * Prüft, ob die mittlere Taste aktuell
+         * gedrückt ist.
+         */
+        bool isUpButtonPressed()
+        {
+            return gpio_get_level(
+                STICKY_BUTTON_UP_PIN
+            ) == 0;
+        }
+
+        /**
          * Spielstand in NVS speichern.
          */
         esp_err_t saveGameState(
@@ -507,6 +549,15 @@ namespace sticky_lotus_firmware
         );
 
         /*
+         * Mittlere Taste (Reset bei 3s Halten) konfigurieren.
+         */
+        ESP_RETURN_ON_ERROR(
+            configureUpButton(),
+            logTag,
+            "Could not configure up button"
+        );
+
+        /*
          * Anzeigen, wodurch das Gerät gestartet wurde.
          */
         const esp_sleep_wakeup_cause_t wakeupCause =
@@ -697,6 +748,24 @@ namespace sticky_lotus_firmware
         bool previousDownButtonPressed =
             isDownButtonPressed();
 
+        bool previousUpButtonPressed =
+            isUpButtonPressed();
+
+        /*
+         * Zeitpunkt, seit dem die mittlere Taste ununterbrochen
+         * gedrückt gehalten wird. 0 bedeutet: nicht gedrückt.
+         */
+        std::int64_t upButtonPressStartUs =
+            0;
+
+        /*
+         * Verhindert wiederholtes Zurücksetzen, solange die Taste
+         * über die Haltezeit hinaus gedrückt bleibt - anders als
+         * enterDeepSleep() kehrt resetGame() normal zurück.
+         */
+        bool upButtonHoldTriggered =
+            false;
+
         while (true)
         {
             /*
@@ -787,6 +856,57 @@ namespace sticky_lotus_firmware
 
             previousDownButtonPressed =
                 downButtonPressed;
+
+            /*
+             * Mittlere Taste: Spiel zurücksetzen bei 3s Halten.
+             *
+             * Bewusst eine deutlich längere Haltezeit als bei
+             * Deep Sleep, da ein Reset destruktiv und nicht
+             * rückgängig zu machen ist.
+             */
+            constexpr std::int64_t upButtonHoldUs =
+                3LL * 1'000'000LL;
+
+            const bool upButtonPressed =
+                isUpButtonPressed();
+
+            if (
+                upButtonPressed &&
+                !previousUpButtonPressed
+            )
+            {
+                upButtonPressStartUs =
+                    esp_timer_get_time();
+
+                upButtonHoldTriggered =
+                    false;
+            }
+
+            if (
+                upButtonPressed &&
+                !upButtonHoldTriggered &&
+                upButtonPressStartUs != 0 &&
+                esp_timer_get_time() - upButtonPressStartUs >=
+                upButtonHoldUs
+            )
+            {
+                application.resetGame();
+
+                upButtonHoldTriggered =
+                    true;
+            }
+
+            if (!upButtonPressed)
+            {
+                upButtonPressStartUs =
+                    0;
+
+                upButtonHoldTriggered =
+                    false;
+            }
+
+            previousUpButtonPressed =
+                upButtonPressed;
 
             const std::int64_t currentTime =
                 esp_timer_get_time();

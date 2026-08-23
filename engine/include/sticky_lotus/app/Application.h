@@ -46,6 +46,15 @@ namespace sticky_lotus::app
          */
         void rollStartingPlayer();
 
+        /**
+         * Setzt das Spiel zurück und wechselt zum Game-Screen.
+         *
+         * Für die physische mittlere Taste gedacht (3s halten) -
+         * wirkt bewusst bildschirmunabhängig, genau wie
+         * rollStartingPlayer() und der Power-Button.
+         */
+        void resetGame();
+
         void draw();
 
         void setBatteryStatus(

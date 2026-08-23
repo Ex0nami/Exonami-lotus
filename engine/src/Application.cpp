@@ -97,6 +97,18 @@ namespace sticky_lotus::app {
         screenManager_.draw();
     }
 
+    void Application::resetGame()
+    {
+        lastInputTime_ =
+            std::chrono::steady_clock::now();
+
+        game_.reset();
+
+        navigation_.showGame();
+
+        screenManager_.draw();
+    }
+
     void Application::draw()
     {
         screenManager_.draw();

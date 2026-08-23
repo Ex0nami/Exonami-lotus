@@ -190,6 +190,8 @@ namespace sticky_lotus
         }
 
         resetCommanderDamage();
+
+        clearStartingPlayerHighlight();
     }
 
     void GameState::changeCommanderDamage(
