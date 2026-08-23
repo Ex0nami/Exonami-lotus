@@ -8,7 +8,7 @@
 
 
 <p align="center">
-  Video preview:   https://lotus.cooppunks.social/sticky-lotus.webm
+  Video preview:   https://lotus.cooppunks.social/sticky-lotus.mp4
 </p>
 
 <p align="center">
