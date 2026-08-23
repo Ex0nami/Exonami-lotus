@@ -23,16 +23,14 @@
 for Magic: The Gathering.
 
 The project focuses on the things you actually need during a game:
-
-- Life tracking for 2 or 4 players
+Life tracking for 2 or 4 players
+- Roll for first
 - Commander Damage
 - Poison Counters
-- Touch gestures
 - Long-press ±10 life changes
 - Configurable starting life
 - Battery status
-- Persistent game state
-- Deep Sleep support
+- Deep sleep support - Persistent game state
 - E-Ink optimized partial refreshes
 
 The goal is a device that feels less like an embedded development board

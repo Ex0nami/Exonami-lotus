@@ -102,9 +102,23 @@ namespace sticky_lotus::screens
             context_.navigation.showGame();
             break;
 
+        /*
+         * Eine minimale Fingerbewegung während eines beabsichtigten
+         * Taps auf +/- reicht aus, um als Swipe erkannt zu werden
+         * (swipeThreshold = 45px). Nur SwipeDown schließt den
+         * Screen - jede andere Richtung wurde bisher komplett
+         * ignoriert, wodurch der Tap auf +/- scheinbar wirkungslos
+         * blieb. Als Tap an der Endposition behandeln, statt
+         * verwerfen.
+         */
         case TouchGesture::SwipeLeft:
         case TouchGesture::SwipeRight:
         case TouchGesture::SwipeUp:
+            processTap(
+                inputFrame.gesture.endPosition
+            );
+            break;
+
         case TouchGesture::None:
             break;
         }

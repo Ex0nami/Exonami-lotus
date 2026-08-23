@@ -1589,7 +1589,7 @@ namespace sticky_lotus::ui
 
         drawSettingsButton(
             getRollStartButtonRectangle(),
-            "Roll Start",
+            "Roll for first",
             false
         );
 

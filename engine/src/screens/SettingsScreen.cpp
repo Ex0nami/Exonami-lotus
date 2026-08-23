@@ -27,9 +27,20 @@ namespace sticky_lotus::screens
             return;
         }
 
+        /*
+         * LongPress zählt hier wie ein normaler Tap.
+         *
+         * Settings-Buttons kennen keine eigene Long-Press-Aktion.
+         * Ohne diesen Fall wird ein etwas länger gehaltener Touch
+         * (ab 250ms, siehe longPressThresholdUs) als LongPress statt
+         * Tap erkannt und dieser Fall wurde bisher komplett
+         * ignoriert - der Button reagierte dann scheinbar nicht.
+         */
         if (
             inputFrame.gesture.gesture ==
-            TouchGesture::Tap
+            TouchGesture::Tap ||
+            inputFrame.gesture.gesture ==
+            TouchGesture::LongPress
         )
         {
             processTap(
