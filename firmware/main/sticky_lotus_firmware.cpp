@@ -413,9 +413,29 @@ namespace sticky_lotus_firmware
             canvas.flushImmediately();
 
             /*
-             * Sleep-Screen sofort vollständig anzeigen.
+             * Zweiter, echter Full-Refresh direkt über das Panel.
+             *
+             * canvas.flushImmediately() ein zweites Mal aufzurufen
+             * würde nichts bewirken: der Canvas ist nach dem ersten
+             * Aufruf bereits "nicht mehr dirty" und überspringt den
+             * Refresh dann intern. Das Sleep-Bild bleibt aber unter
+             * Umständen sehr lange sichtbar - ein erneuter kompletter
+             * Full-Refresh-Zyklus (nochmaliges Schwarz/Weiß-Spülen
+             * des Panels) entfernt zuverlässiger jegliches
+             * Restghosting aus den vorherigen Partial-Refreshes,
+             * bevor das Bild dauerhaft stehen bleibt.
              */
-            canvas.flushImmediately();
+            const esp_err_t secondRefreshResult =
+                panel.RefreshFull();
+
+            if (secondRefreshResult != ESP_OK)
+            {
+                ESP_LOGW(
+                    logTag,
+                    "Second (ghosting-clearing) full refresh failed: %s",
+                    esp_err_to_name(secondRefreshResult)
+                );
+            }
 
             ESP_LOGI(
                 logTag,
