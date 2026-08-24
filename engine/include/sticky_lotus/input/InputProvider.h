@@ -92,6 +92,18 @@ namespace sticky_lotus::input {
          */
         [[nodiscard]]
         virtual InputFrame poll() = 0;
+
+        /**
+         * Schaltet akustisches Klickfeedback auf Eingaben ein
+         * oder aus, sofern die Plattform das unterstützt.
+         *
+         * Standardmäßig ein No-op - nicht jede Plattform hat
+         * dafür Hardware (z.B. der Desktop-Simulator).
+         */
+        virtual void setSoundEnabled(bool enabled)
+        {
+            (void)enabled;
+        }
     };
 
 } // namespace sticky_lotus::input

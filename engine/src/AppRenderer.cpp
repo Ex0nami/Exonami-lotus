@@ -1279,6 +1279,25 @@ namespace sticky_lotus::ui
         canvas_.flush();
     }
 
+    void AppRenderer::drawSoundSettingsButtons(
+        const GameState& game
+    )
+    {
+        drawSettingsButton(
+            getSoundOnButtonRectangle(),
+            "On",
+            game.getSettings().soundEnabled
+        );
+
+        drawSettingsButton(
+            getSoundOffButtonRectangle(),
+            "Off",
+            !game.getSettings().soundEnabled
+        );
+
+        canvas_.flush();
+    }
+
     void AppRenderer::drawMultiplayerLifeSettingsButtons(
         const GameState& game
     )
@@ -1487,6 +1506,41 @@ namespace sticky_lotus::ui
             "4",
             game.getSettings().playerMode ==
             PlayerMode::FourPlayers
+        );
+
+        /*
+         * Sound (Klickfeedback)
+         */
+        const Rect soundOnButton =
+            getSoundOnButtonRectangle();
+
+        const Rect soundOffButton =
+            getSoundOffButtonRectangle();
+
+        canvas_.drawText(
+            "Sound",
+            {
+                soundOnButton.x,
+                soundOnButton.y - 38.0F,
+                260.0F,
+                32.0F
+            },
+            26,
+            Ink::Black,
+            TextAlignment::Left,
+            0.0F
+        );
+
+        drawSettingsButton(
+            soundOnButton,
+            "On",
+            game.getSettings().soundEnabled
+        );
+
+        drawSettingsButton(
+            soundOffButton,
+            "Off",
+            !game.getSettings().soundEnabled
         );
 
         /*
@@ -1734,6 +1788,26 @@ namespace sticky_lotus::ui
             210.0F,
             125.0F,
             125.0F,
+            44.0F
+        };
+    }
+
+    Rect AppRenderer::getSoundOnButtonRectangle() const
+    {
+        return {
+            515.0F,
+            125.0F,
+            110.0F,
+            44.0F
+        };
+    }
+
+    Rect AppRenderer::getSoundOffButtonRectangle() const
+    {
+        return {
+            645.0F,
+            125.0F,
+            110.0F,
             44.0F
         };
     }

@@ -13,6 +13,7 @@ idf_component_register(
         board
         driver
         touch_service
+        buzzer_service
 )
 
 target_compile_features(

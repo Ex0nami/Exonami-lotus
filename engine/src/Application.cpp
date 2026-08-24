@@ -21,6 +21,17 @@ namespace sticky_lotus::app {
 
     void Application::tick()
     {
+        /*
+         * Aktuelle Sound-Einstellung an die Plattform durchreichen.
+         *
+         * Der tatsächliche Klick entsteht asynchron im Touch-Task,
+         * nicht in diesem Aufruf - regelmäßiges Synchronisieren
+         * reicht, ein eigener Änderungs-Hook ist nicht nötig.
+         */
+        input_.setSoundEnabled(
+            game_.getSettings().soundEnabled
+        );
+
         const input::InputFrame input =
             input_.poll();
 
@@ -137,8 +148,25 @@ namespace sticky_lotus::app {
         const GameSnapshot& snapshot
     )
     {
-        return game_.restoreSnapshot(
-            snapshot
+        const bool restored =
+            game_.restoreSnapshot(
+                snapshot
+            );
+
+        /*
+         * Sofort synchronisieren statt auf den nächsten tick() zu
+         * warten: tick() läuft erst, sobald bereits eine Eingabe
+         * ansteht, aber der Klickton für genau diese erste Eingabe
+         * entsteht asynchron im Touch-Task VOR diesem tick()-Aufruf.
+         *
+         * Ohne dieses sofortige Sync würde nach jedem Aufwachen aus
+         * dem Deep Sleep der allererste Klick immer hörbar sein,
+         * selbst wenn Sound eigentlich deaktiviert ist.
+         */
+        input_.setSoundEnabled(
+            game_.getSettings().soundEnabled
         );
+
+        return restored;
     }
 } // namespace sticky_lotus::app

@@ -13,6 +13,8 @@ struct GameSettings {
     int multiplayerStartingLife = 40;
     int twoPlayerStartingLife = 20;
 
+    bool soundEnabled = true;
+
     [[nodiscard]]
     std::size_t playerCount() const
     {

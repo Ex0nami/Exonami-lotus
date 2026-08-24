@@ -2,6 +2,7 @@
 
 #include "sticky_lotus/ui/AppRenderer.h"
 
+#include "buzzer_service.h"
 #include "esp_log.h"
 #include "touch_service.h"
 
@@ -232,6 +233,19 @@ void StickyInputProvider::handleTouchEvent(
                 TouchGesture::LongPress;
         }
 
+        /*
+         * Kurzes Klickfeedback nur für Tap/LongPress - Swipes
+         * sind Navigationsgesten, kein "Button-Druck".
+         */
+        if (
+            completedFrame.gesture.gesture ==
+                TouchGesture::Tap ||
+            completedFrame.gesture.gesture ==
+                TouchGesture::LongPress
+        ) {
+            buzzer_service::Click();
+        }
+
         completedFrame.pointer.position =
             lastPosition_;
 
@@ -261,6 +275,15 @@ void StickyInputProvider::handleTouchEvent(
     case touch_service::TouchPhase::kNone:
         break;
     }
+}
+
+void StickyInputProvider::setSoundEnabled(
+    const bool enabled
+)
+{
+    buzzer_service::SetEnabled(
+        enabled
+    );
 }
 
 bool StickyInputProvider::hasPendingInput() const

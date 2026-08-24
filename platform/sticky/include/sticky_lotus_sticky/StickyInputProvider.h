@@ -22,6 +22,8 @@ namespace sticky_lotus_sticky {
         [[nodiscard]]
         sticky_lotus::input::InputFrame poll() override;
 
+        void setSoundEnabled(bool enabled) override;
+
         [[nodiscard]]
         bool hasPendingInput() const;
 

@@ -57,6 +57,12 @@ namespace sticky_lotus::ui
         Rect getFourPlayersButtonRectangle() const;
 
         [[nodiscard]]
+        Rect getSoundOnButtonRectangle() const;
+
+        [[nodiscard]]
+        Rect getSoundOffButtonRectangle() const;
+
+        [[nodiscard]]
         Rect getMultiplayer40Rectangle() const;
 
         [[nodiscard]]
@@ -104,6 +110,10 @@ namespace sticky_lotus::ui
             std::size_t playerCount
         ) const;
         void drawPlayerModeSettingsButtons(
+            const GameState& game
+        );
+
+        void drawSoundSettingsButtons(
             const GameState& game
         );
 

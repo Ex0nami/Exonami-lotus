@@ -110,6 +110,10 @@ public:
         int life
     );
 
+    void setSoundEnabled(
+        bool enabled
+    );
+
     void reset();
 
     void changeCommanderDamage(

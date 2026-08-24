@@ -170,6 +170,14 @@ namespace sticky_lotus
         }
     }
 
+    void GameState::setSoundEnabled(
+        const bool enabled
+    )
+    {
+        settings_.soundEnabled =
+            enabled;
+    }
+
     void GameState::reset()
     {
         const int startingLife =

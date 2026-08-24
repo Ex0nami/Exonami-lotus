@@ -5,6 +5,7 @@
 #include "sticky_lotus_sticky/StickyInputProvider.h"
 
 #include "battery_service.h"
+#include "buzzer_service.h"
 #include "epaper_panel.h"
 #include "sticky_board.h"
 #include "sticky_board_config.h"
@@ -597,6 +598,26 @@ namespace sticky_lotus_firmware
             logTag,
             "Could not initialize battery service"
         );
+
+        /*
+         * Buzzer für kurzes Klick-Feedback initialisieren.
+         *
+         * Nicht kritisch für den Betrieb - Fehler nur loggen,
+         * die App läuft auch ohne Klickfeedback weiter.
+         */
+        {
+            const esp_err_t buzzerResult =
+                buzzer_service::Init();
+
+            if (buzzerResult != ESP_OK)
+            {
+                ESP_LOGW(
+                    logTag,
+                    "Could not initialize buzzer service: %s",
+                    esp_err_to_name(buzzerResult)
+                );
+            }
+        }
 
         battery_service::BatteryState battery{};
 

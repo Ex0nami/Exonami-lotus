@@ -93,8 +93,40 @@ namespace sticky_lotus::screens
             );
 
             context_.renderer.drawPlayerModeSettingsButtons(
-    context_.game
-);
+                context_.game
+            );
+            return;
+        }
+
+        if (
+            renderer
+            .getSoundOnButtonRectangle()
+            .contains(position)
+        )
+        {
+            context_.game.setSoundEnabled(
+                true
+            );
+
+            context_.renderer.drawSoundSettingsButtons(
+                context_.game
+            );
+            return;
+        }
+
+        if (
+            renderer
+            .getSoundOffButtonRectangle()
+            .contains(position)
+        )
+        {
+            context_.game.setSoundEnabled(
+                false
+            );
+
+            context_.renderer.drawSoundSettingsButtons(
+                context_.game
+            );
             return;
         }
 
