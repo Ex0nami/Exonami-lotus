@@ -208,7 +208,7 @@ idf.py -p <PORT> flash monitor
 cd firmware
 nix develop  //if you are using nix
 idf.py build
-idf.py merged-bin
+idf.py merge-bin
 ```
 
 generate `build/merged-binary.bin`
