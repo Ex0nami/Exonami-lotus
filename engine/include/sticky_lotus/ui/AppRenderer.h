@@ -243,6 +243,78 @@ namespace sticky_lotus::ui
         );
 
         /**
+         * Zeichnet die Anzeige der zuletzt veränderten Lebenspunkte
+         * eines Spielers (z.B. "-5") in dessen oberer linker Ecke
+         * (Minus) oder oberer rechter Ecke (Plus).
+         *
+         * Löscht zunächst beide Ecken, damit ein Vorzeichenwechsel
+         * oder das Verschwinden nach Ablauf des Timeouts sauber
+         * ohne Bildreste dargestellt wird.
+         */
+        void drawLifeDeltaBadge(
+            const GameState& game,
+            std::size_t playerIndex,
+            const Rect& playerArea,
+            bool upsideDown
+        );
+
+        /**
+         * Analog zu drawLifeDeltaBadge(), aber für die Giftzähler-
+         * Änderung auf dem Poison-Screen. Selbe Eckenposition.
+         */
+        void drawPoisonDeltaBadge(
+            const GameState& game,
+            std::size_t playerIndex,
+            const Rect& playerArea,
+            bool upsideDown
+        );
+
+        /**
+         * Analog zu drawLifeDeltaBadge(), aber für die Schadens-
+         * änderung eines einzelnen Angreifers auf dem Commander-
+         * Damage-Screen.
+         *
+         * Nutzt bewusst die untere statt die obere Ecke (siehe
+         * getCommanderDamageBadgeRectangle()), da oben bereits die
+         * Spielernummer und - im Empfängerfeld - die Überschrift
+         * bzw. der Swipe-Hinweis liegen.
+         */
+        void drawCommanderDamageDeltaBadge(
+            const commander::CommanderDamageDraft& draft,
+            std::size_t attackingPlayer,
+            const Rect& playerArea,
+            bool upsideDown
+        );
+
+        /**
+         * Liefert die Ecke eines Spielerfeldes für eine Zähler-
+         * Änderungsanzeige (Leben, Gift).
+         *
+         * "leftSide" bezieht sich auf die Sicht des Spielers selbst
+         * (links = Minus, rechts = Plus). Bei umgedrehten Spielern
+         * liegt deren "oben links" physisch in der unteren rechten
+         * Bildschirmecke des Feldes - analog zur Vertauschung von
+         * Minus- und Plus-Bereich in drawPlayer().
+         */
+        [[nodiscard]]
+        Rect getCornerBadgeRectangle(
+            const Rect& playerArea,
+            bool leftSide,
+            bool upsideDown
+        ) const;
+
+        /**
+         * Wie getCornerBadgeRectangle(), aber für die untere statt
+         * die obere Ecke - siehe drawCommanderDamageDeltaBadge().
+         */
+        [[nodiscard]]
+        Rect getCommanderDamageBadgeRectangle(
+            const Rect& playerArea,
+            bool leftSide,
+            bool upsideDown
+        ) const;
+
+        /**
          * Y-Position "distanceFromOuterEdge" Pixel von der
          * Außenkante eines Spielerfeldes entfernt.
          *

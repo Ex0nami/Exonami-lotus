@@ -469,6 +469,14 @@ namespace sticky_lotus::ui
                 rotation
             );
         }
+
+        drawPoisonDeltaBadge(
+            game,
+            selectedPlayer,
+            playerArea,
+            upsideDown
+        );
+
         /*
          * Batterie und Menübutton nach dem partiellen
          * Redraw wieder über das Spielerfeld legen.
@@ -807,6 +815,282 @@ namespace sticky_lotus::ui
               distanceFromOuterEdge;
     }
 
+    Rect AppRenderer::getCornerBadgeRectangle(
+        const Rect& playerArea,
+        const bool leftSide,
+        const bool upsideDown
+    ) const
+    {
+        constexpr float badgeWidth = 110.0F;
+        constexpr float badgeHeight = 40.0F;
+        constexpr float margin = 6.0F;
+
+        /*
+         * "leftSide" ist aus Sicht des Spielers gemeint. Bei
+         * umgedrehten Spielern liegt deren "links" und "oben"
+         * physisch auf der rechten/unteren Bildschirmseite.
+         */
+        const bool physicalLeft =
+            leftSide != upsideDown;
+
+        const float x =
+            physicalLeft
+                ? playerArea.x + margin
+                : playerArea.x +
+                  playerArea.width -
+                  margin -
+                  badgeWidth;
+
+        const float y =
+            upsideDown
+                ? playerArea.y +
+                  playerArea.height -
+                  margin -
+                  badgeHeight
+                : playerArea.y + margin;
+
+        return {
+            x,
+            y,
+            badgeWidth,
+            badgeHeight
+        };
+    }
+
+    Rect AppRenderer::getCommanderDamageBadgeRectangle(
+        const Rect& playerArea,
+        const bool leftSide,
+        const bool upsideDown
+    ) const
+    {
+        constexpr float badgeWidth = 110.0F;
+        constexpr float badgeHeight = 40.0F;
+        constexpr float margin = 6.0F;
+
+        const bool physicalLeft =
+            leftSide != upsideDown;
+
+        const float x =
+            physicalLeft
+                ? playerArea.x + margin
+                : playerArea.x +
+                  playerArea.width -
+                  margin -
+                  badgeWidth;
+
+        /*
+         * Anders als getCornerBadgeRectangle(): hier liegt die
+         * Ecke "unten" statt "oben" aus Lesesicht des Spielers,
+         * weil oben bereits die Spielernummer bzw. im Empfänger-
+         * feld die Überschrift und der Swipe-Hinweis liegen.
+         */
+        const float y =
+            upsideDown
+                ? playerArea.y + margin
+                : playerArea.y +
+                  playerArea.height -
+                  margin -
+                  badgeHeight;
+
+        return {
+            x,
+            y,
+            badgeWidth,
+            badgeHeight
+        };
+    }
+
+    void AppRenderer::drawLifeDeltaBadge(
+        const GameState& game,
+        const std::size_t playerIndex,
+        const Rect& playerArea,
+        const bool upsideDown
+    )
+    {
+        const Rect minusBadgeArea =
+            getCornerBadgeRectangle(
+                playerArea,
+                true,
+                upsideDown
+            );
+
+        const Rect plusBadgeArea =
+            getCornerBadgeRectangle(
+                playerArea,
+                false,
+                upsideDown
+            );
+
+        /*
+         * Immer beide Ecken löschen, unabhängig vom aktuellen
+         * Vorzeichen - sonst bliebe bei einem Vorzeichenwechsel
+         * oder nach Ablauf des Timeouts ein Bildrest stehen.
+         */
+        canvas_.fillRect(
+            minusBadgeArea,
+            Ink::White
+        );
+
+        canvas_.fillRect(
+            plusBadgeArea,
+            Ink::White
+        );
+
+        if (!game.hasLifeDeltaHighlight(playerIndex))
+        {
+            return;
+        }
+
+        const int delta =
+            game.getLifeDelta(playerIndex);
+
+        if (delta == 0)
+        {
+            return;
+        }
+
+        const float rotation =
+            upsideDown ? 180.0F : 0.0F;
+
+        const std::string text =
+            delta > 0
+                ? "+" + std::to_string(delta)
+                : std::to_string(delta);
+
+        canvas_.drawText(
+            text,
+            delta < 0 ? minusBadgeArea : plusBadgeArea,
+            28,
+            Ink::DarkGray,
+            TextAlignment::Center,
+            rotation
+        );
+    }
+
+    void AppRenderer::drawPoisonDeltaBadge(
+        const GameState& game,
+        const std::size_t playerIndex,
+        const Rect& playerArea,
+        const bool upsideDown
+    )
+    {
+        const Rect minusBadgeArea =
+            getCornerBadgeRectangle(
+                playerArea,
+                true,
+                upsideDown
+            );
+
+        const Rect plusBadgeArea =
+            getCornerBadgeRectangle(
+                playerArea,
+                false,
+                upsideDown
+            );
+
+        canvas_.fillRect(
+            minusBadgeArea,
+            Ink::White
+        );
+
+        canvas_.fillRect(
+            plusBadgeArea,
+            Ink::White
+        );
+
+        if (!game.hasPoisonDeltaHighlight(playerIndex))
+        {
+            return;
+        }
+
+        const int delta =
+            game.getPoisonDelta(playerIndex);
+
+        if (delta == 0)
+        {
+            return;
+        }
+
+        const float rotation =
+            upsideDown ? 180.0F : 0.0F;
+
+        const std::string text =
+            delta > 0
+                ? "+" + std::to_string(delta)
+                : std::to_string(delta);
+
+        canvas_.drawText(
+            text,
+            delta < 0 ? minusBadgeArea : plusBadgeArea,
+            28,
+            Ink::DarkGray,
+            TextAlignment::Center,
+            rotation
+        );
+    }
+
+    void AppRenderer::drawCommanderDamageDeltaBadge(
+        const commander::CommanderDamageDraft& draft,
+        const std::size_t attackingPlayer,
+        const Rect& playerArea,
+        const bool upsideDown
+    )
+    {
+        const Rect minusBadgeArea =
+            getCommanderDamageBadgeRectangle(
+                playerArea,
+                true,
+                upsideDown
+            );
+
+        const Rect plusBadgeArea =
+            getCommanderDamageBadgeRectangle(
+                playerArea,
+                false,
+                upsideDown
+            );
+
+        canvas_.fillRect(
+            minusBadgeArea,
+            Ink::White
+        );
+
+        canvas_.fillRect(
+            plusBadgeArea,
+            Ink::White
+        );
+
+        if (!draft.hasDamageDeltaHighlight(attackingPlayer))
+        {
+            return;
+        }
+
+        const int delta =
+            draft.getDamageDelta(attackingPlayer);
+
+        if (delta == 0)
+        {
+            return;
+        }
+
+        const float rotation =
+            upsideDown ? 180.0F : 0.0F;
+
+        const std::string text =
+            delta > 0
+                ? "+" + std::to_string(delta)
+                : std::to_string(delta);
+
+        canvas_.drawText(
+            text,
+            delta < 0 ? minusBadgeArea : plusBadgeArea,
+            28,
+            Ink::DarkGray,
+            TextAlignment::Center,
+            rotation
+        );
+    }
+
     void AppRenderer::drawGestureHints(
         const Rect& playerArea,
         const float rotation
@@ -1059,6 +1343,13 @@ namespace sticky_lotus::ui
             drawGestureHints(
                 playerArea,
                 rotation
+            );
+
+            drawLifeDeltaBadge(
+                game,
+                playerIndex,
+                playerArea,
+                upsideDown
             );
 
             return;
@@ -2307,6 +2598,13 @@ namespace sticky_lotus::ui
             rotation
         );
 
+        drawLifeDeltaBadge(
+            game,
+            playerIndex,
+            playerArea,
+            upsideDown
+        );
+
         /*
          * Muss das komplette Spielerfeld abdecken, nicht nur
          * lifeRedrawArea - sonst wird der Refresh für die
@@ -2628,6 +2926,13 @@ namespace sticky_lotus::ui
             Ink::DarkGray,
             TextAlignment::Center,
             rotation
+        );
+
+        drawCommanderDamageDeltaBadge(
+            draft,
+            playerIndex,
+            playerArea,
+            upsideDown
         );
 
         /*

@@ -109,6 +109,9 @@ namespace sticky_lotus
             return;
         }
 
+        const int lifeBefore =
+            players_[playerIndex].life;
+
         players_[playerIndex].life =
             std::max(
                 0,
@@ -118,6 +121,33 @@ namespace sticky_lotus
         updateEliminationState(
             playerIndex
         );
+
+        const int appliedChange =
+            players_[playerIndex].life - lifeBefore;
+
+        if (appliedChange != 0)
+        {
+            lifeDelta_[playerIndex] +=
+                appliedChange;
+
+            hasLifeDeltaHighlight_[playerIndex] =
+                lifeDelta_[playerIndex] != 0;
+
+            lifeDeltaTimestamp_[playerIndex] =
+                std::chrono::steady_clock::now();
+        }
+
+        /*
+         * Ein soeben ausgeschiedener Spieler zeigt keine
+         * Lebenspunkte mehr an - die Anzeige wäre also ohnehin
+         * unsichtbar und könnte bei Rückkehr ins Spiel veraltet
+         * wieder auftauchen.
+         */
+        if (isPlayerEliminated(playerIndex))
+        {
+            lifeDelta_[playerIndex] = 0;
+            hasLifeDeltaHighlight_[playerIndex] = false;
+        }
     }
     void GameState::setPlayerMode(
         const PlayerMode mode
@@ -200,6 +230,12 @@ namespace sticky_lotus
         resetCommanderDamage();
 
         clearStartingPlayerHighlight();
+
+        lifeDelta_.fill(0);
+        hasLifeDeltaHighlight_.fill(false);
+
+        poisonDelta_.fill(0);
+        hasPoisonDeltaHighlight_.fill(false);
     }
 
     void GameState::changeCommanderDamage(
@@ -349,6 +385,9 @@ namespace sticky_lotus
             return;
         }
 
+        const int poisonBefore =
+            players_[playerIndex].poison;
+
         players_[playerIndex].poison =
             std::max(
                 0,
@@ -359,6 +398,27 @@ namespace sticky_lotus
         updateEliminationState(
             playerIndex
         );
+
+        const int appliedChange =
+            players_[playerIndex].poison - poisonBefore;
+
+        if (appliedChange != 0)
+        {
+            poisonDelta_[playerIndex] +=
+                appliedChange;
+
+            hasPoisonDeltaHighlight_[playerIndex] =
+                poisonDelta_[playerIndex] != 0;
+
+            poisonDeltaTimestamp_[playerIndex] =
+                std::chrono::steady_clock::now();
+        }
+
+        if (isPlayerEliminated(playerIndex))
+        {
+            poisonDelta_[playerIndex] = 0;
+            hasPoisonDeltaHighlight_[playerIndex] = false;
+        }
     }
 
     int GameState::getPoison(
@@ -401,6 +461,106 @@ namespace sticky_lotus
     {
         hasStartingPlayerHighlight_ =
             false;
+    }
+
+    bool GameState::hasLifeDeltaHighlight(
+        const std::size_t playerIndex
+    ) const
+    {
+        if (playerIndex >= maximumPlayerCount)
+        {
+            return false;
+        }
+
+        return hasLifeDeltaHighlight_[playerIndex];
+    }
+
+    int GameState::getLifeDelta(
+        const std::size_t playerIndex
+    ) const
+    {
+        if (playerIndex >= maximumPlayerCount)
+        {
+            return 0;
+        }
+
+        return lifeDelta_[playerIndex];
+    }
+
+    std::chrono::steady_clock::time_point
+    GameState::getLifeDeltaTimestamp(
+        const std::size_t playerIndex
+    ) const
+    {
+        if (playerIndex >= maximumPlayerCount)
+        {
+            return {};
+        }
+
+        return lifeDeltaTimestamp_[playerIndex];
+    }
+
+    void GameState::clearLifeDeltaHighlight(
+        const std::size_t playerIndex
+    )
+    {
+        if (playerIndex >= maximumPlayerCount)
+        {
+            return;
+        }
+
+        lifeDelta_[playerIndex] = 0;
+        hasLifeDeltaHighlight_[playerIndex] = false;
+    }
+
+    bool GameState::hasPoisonDeltaHighlight(
+        const std::size_t playerIndex
+    ) const
+    {
+        if (playerIndex >= maximumPlayerCount)
+        {
+            return false;
+        }
+
+        return hasPoisonDeltaHighlight_[playerIndex];
+    }
+
+    int GameState::getPoisonDelta(
+        const std::size_t playerIndex
+    ) const
+    {
+        if (playerIndex >= maximumPlayerCount)
+        {
+            return 0;
+        }
+
+        return poisonDelta_[playerIndex];
+    }
+
+    std::chrono::steady_clock::time_point
+    GameState::getPoisonDeltaTimestamp(
+        const std::size_t playerIndex
+    ) const
+    {
+        if (playerIndex >= maximumPlayerCount)
+        {
+            return {};
+        }
+
+        return poisonDeltaTimestamp_[playerIndex];
+    }
+
+    void GameState::clearPoisonDeltaHighlight(
+        const std::size_t playerIndex
+    )
+    {
+        if (playerIndex >= maximumPlayerCount)
+        {
+            return;
+        }
+
+        poisonDelta_[playerIndex] = 0;
+        hasPoisonDeltaHighlight_[playerIndex] = false;
     }
 
     GameSnapshot GameState::createSnapshot() const

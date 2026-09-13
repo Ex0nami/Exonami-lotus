@@ -4,6 +4,7 @@
 #include "sticky_lotus/GameSettings.h"
 
 #include <array>
+#include <chrono>
 #include <cstddef>
 #include <cstdint>
 #include <string>
@@ -157,6 +158,57 @@ public:
     void clearStartingPlayerHighlight();
 
     /*
+     * Zeigt an, um wie viel sich die Lebenspunkte eines Spielers
+     * innerhalb der letzten 15 Sekunden insgesamt verändert haben
+     * (z.B. "-5" nach mehreren schnellen Taps), damit die Änderung
+     * kurz nachvollziehbar bleibt.
+     *
+     * Bewusst nicht Teil von GameSnapshot - reine, kurzlebige
+     * UI-Rückmeldung, kein dauerhafter Spielzustand.
+     */
+    [[nodiscard]]
+    bool hasLifeDeltaHighlight(
+        std::size_t playerIndex
+    ) const;
+
+    [[nodiscard]]
+    int getLifeDelta(
+        std::size_t playerIndex
+    ) const;
+
+    [[nodiscard]]
+    std::chrono::steady_clock::time_point getLifeDeltaTimestamp(
+        std::size_t playerIndex
+    ) const;
+
+    void clearLifeDeltaHighlight(
+        std::size_t playerIndex
+    );
+
+    /*
+     * Analog zu hasLifeDeltaHighlight() / getLifeDelta(), aber für
+     * die Giftzähler-Änderung auf dem Poison-Screen.
+     */
+    [[nodiscard]]
+    bool hasPoisonDeltaHighlight(
+        std::size_t playerIndex
+    ) const;
+
+    [[nodiscard]]
+    int getPoisonDelta(
+        std::size_t playerIndex
+    ) const;
+
+    [[nodiscard]]
+    std::chrono::steady_clock::time_point getPoisonDeltaTimestamp(
+        std::size_t playerIndex
+    ) const;
+
+    void clearPoisonDeltaHighlight(
+        std::size_t playerIndex
+    );
+
+    /*
      * Deep-Sleep-Unterstützung
      */
     [[nodiscard]]
@@ -176,6 +228,36 @@ private:
 
     bool hasStartingPlayerHighlight_ = false;
     std::size_t startingPlayerHighlight_ = 0;
+
+    std::array<
+        int,
+        maximumPlayerCount
+    > lifeDelta_{};
+
+    std::array<
+        bool,
+        maximumPlayerCount
+    > hasLifeDeltaHighlight_{};
+
+    std::array<
+        std::chrono::steady_clock::time_point,
+        maximumPlayerCount
+    > lifeDeltaTimestamp_{};
+
+    std::array<
+        int,
+        maximumPlayerCount
+    > poisonDelta_{};
+
+    std::array<
+        bool,
+        maximumPlayerCount
+    > hasPoisonDeltaHighlight_{};
+
+    std::array<
+        std::chrono::steady_clock::time_point,
+        maximumPlayerCount
+    > poisonDeltaTimestamp_{};
 
     /*
      * Erster Index:

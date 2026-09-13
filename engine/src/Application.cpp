@@ -57,37 +57,137 @@ namespace sticky_lotus::app {
 
     void Application::checkTimeouts()
     {
-        if (!game_.hasStartingPlayerHighlight()) {
-            return;
-        }
-
         /*
-         * Nur relevant, während der Game-Screen tatsächlich
-         * sichtbar ist - ein regionaler Redraw auf einem anderen
-         * Screen würde dessen Inhalt beschädigen.
+         * Jeder Zweig unten ist nur relevant, während der jeweils
+         * betroffene Screen tatsächlich sichtbar ist - ein
+         * regionaler Redraw auf einem anderen Screen würde dessen
+         * Inhalt beschädigen.
          */
-        if (navigation_.currentScreen() != ScreenId::Game) {
+        const ScreenId currentScreen =
+            navigation_.currentScreen();
+
+        constexpr std::chrono::seconds deltaTimeout{15};
+
+        const auto now =
+            std::chrono::steady_clock::now();
+
+        if (currentScreen == ScreenId::Game) {
+            if (game_.hasStartingPlayerHighlight()) {
+                constexpr std::chrono::seconds highlightTimeout{10};
+
+                if (
+                    now - lastInputTime_ >=
+                    highlightTimeout
+                ) {
+                    const std::size_t highlightedPlayer =
+                        game_.getStartingPlayerHighlight();
+
+                    game_.clearStartingPlayerHighlight();
+
+                    renderer_.drawPlayerRegion(
+                        game_,
+                        highlightedPlayer
+                    );
+                }
+            }
+
+            for (
+                std::size_t playerIndex = 0;
+                playerIndex < game_.getPlayerCount();
+                ++playerIndex
+            ) {
+                if (!game_.hasLifeDeltaHighlight(playerIndex)) {
+                    continue;
+                }
+
+                if (
+                    now - game_.getLifeDeltaTimestamp(playerIndex) <
+                    deltaTimeout
+                ) {
+                    continue;
+                }
+
+                game_.clearLifeDeltaHighlight(playerIndex);
+
+                renderer_.drawPlayerRegion(
+                    game_,
+                    playerIndex
+                );
+            }
+
             return;
         }
 
-        constexpr std::chrono::seconds highlightTimeout{10};
+        if (currentScreen == ScreenId::Poison) {
+            const std::size_t selectedPlayer =
+                navigation_.selectedPlayer();
 
-        if (
-            std::chrono::steady_clock::now() - lastInputTime_ <
-            highlightTimeout
-        ) {
+            if (
+                selectedPlayer >= game_.getPlayerCount() ||
+                !game_.hasPoisonDeltaHighlight(selectedPlayer)
+            ) {
+                return;
+            }
+
+            if (
+                now - game_.getPoisonDeltaTimestamp(selectedPlayer) <
+                deltaTimeout
+            ) {
+                return;
+            }
+
+            game_.clearPoisonDeltaHighlight(selectedPlayer);
+
+            renderer_.drawPoisonRegion(
+                game_,
+                selectedPlayer
+            );
+
             return;
         }
 
-        const std::size_t highlightedPlayer =
-            game_.getStartingPlayerHighlight();
+        if (currentScreen == ScreenId::CommanderDamage) {
+            if (!commanderDraft_.isActive()) {
+                return;
+            }
 
-        game_.clearStartingPlayerHighlight();
+            const std::size_t playerCount =
+                commanderDraft_.playerCount();
 
-        renderer_.drawPlayerRegion(
-            game_,
-            highlightedPlayer
-        );
+            for (
+                std::size_t attackingPlayer = 0;
+                attackingPlayer < playerCount;
+                ++attackingPlayer
+            ) {
+                if (
+                    !commanderDraft_.hasDamageDeltaHighlight(
+                        attackingPlayer
+                    )
+                ) {
+                    continue;
+                }
+
+                if (
+                    now -
+                    commanderDraft_.getDamageDeltaTimestamp(
+                        attackingPlayer
+                    ) <
+                    deltaTimeout
+                ) {
+                    continue;
+                }
+
+                commanderDraft_.clearDamageDeltaHighlight(
+                    attackingPlayer
+                );
+
+                renderer_.drawCommanderDamageRegion(
+                    game_,
+                    commanderDraft_,
+                    attackingPlayer
+                );
+            }
+        }
     }
 
     void Application::rollStartingPlayer()

@@ -4,6 +4,7 @@
 
 #include <algorithm>
 #include <array>
+#include <chrono>
 #include <cstddef>
 
 namespace sticky_lotus::commander {
@@ -34,6 +35,9 @@ public:
 
         originalDamage_.fill(0);
         editedDamage_.fill(0);
+
+        damageDelta_.fill(0);
+        hasDamageDeltaHighlight_.fill(false);
 
         if (!active_) {
             return;
@@ -75,11 +79,82 @@ public:
             return;
         }
 
+        const int before =
+            editedDamage_[attackingPlayer];
+
         editedDamage_[attackingPlayer] =
             std::max(
                 0,
                 editedDamage_[attackingPlayer] + amount
             );
+
+        const int appliedChange =
+            editedDamage_[attackingPlayer] - before;
+
+        if (appliedChange != 0) {
+            damageDelta_[attackingPlayer] +=
+                appliedChange;
+
+            hasDamageDeltaHighlight_[attackingPlayer] =
+                damageDelta_[attackingPlayer] != 0;
+
+            damageDeltaTimestamp_[attackingPlayer] =
+                std::chrono::steady_clock::now();
+        }
+    }
+
+    /*
+     * Analog zu GameState::hasLifeDeltaHighlight() / getLifeDelta(),
+     * aber für die Schadensänderung eines einzelnen Angreifers
+     * innerhalb dieses Drafts - kurzlebige UI-Rückmeldung, die nicht
+     * über begin()/commit() hinaus erhalten bleiben muss.
+     */
+    [[nodiscard]]
+    bool hasDamageDeltaHighlight(
+        const std::size_t attackingPlayer
+    ) const
+    {
+        if (attackingPlayer >= maximumPlayerCount) {
+            return false;
+        }
+
+        return hasDamageDeltaHighlight_[attackingPlayer];
+    }
+
+    [[nodiscard]]
+    int getDamageDelta(
+        const std::size_t attackingPlayer
+    ) const
+    {
+        if (attackingPlayer >= maximumPlayerCount) {
+            return 0;
+        }
+
+        return damageDelta_[attackingPlayer];
+    }
+
+    [[nodiscard]]
+    std::chrono::steady_clock::time_point getDamageDeltaTimestamp(
+        const std::size_t attackingPlayer
+    ) const
+    {
+        if (attackingPlayer >= maximumPlayerCount) {
+            return {};
+        }
+
+        return damageDeltaTimestamp_[attackingPlayer];
+    }
+
+    void clearDamageDeltaHighlight(
+        const std::size_t attackingPlayer
+    )
+    {
+        if (attackingPlayer >= maximumPlayerCount) {
+            return;
+        }
+
+        damageDelta_[attackingPlayer] = 0;
+        hasDamageDeltaHighlight_[attackingPlayer] = false;
     }
 
     /**
@@ -200,6 +275,15 @@ private:
 
     std::array<int, maximumPlayerCount>
         editedDamage_{};
+
+    std::array<int, maximumPlayerCount>
+        damageDelta_{};
+
+    std::array<bool, maximumPlayerCount>
+        hasDamageDeltaHighlight_{};
+
+    std::array<std::chrono::steady_clock::time_point, maximumPlayerCount>
+        damageDeltaTimestamp_{};
 };
 
 } // namespace sticky_lotus::commander
