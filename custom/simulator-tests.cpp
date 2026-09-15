@@ -1,7 +1,11 @@
 // Integration tests use the real Application, screens, renderer and Raylib canvas.
 #include "sticky_lotus/app/Application.h"
+#ifndef STICKY_HEADLESS_TEST
 #include "sticky_lotus_raylib/RaylibCanvas.h"
 #include <rlgl.h>
+#else
+#include "HeadlessCanvas.h"
+#endif
 #include <algorithm>
 #include <iostream>
 #include <stdexcept>
@@ -17,7 +21,11 @@ struct TestInput : InputProvider {
     InputFrame poll() override { auto result=next; next={}; return result; }
 };
 struct RecordedCanvas : Canvas {
+#ifndef STICKY_HEADLESS_TEST
     sticky_lotus_raylib::RaylibCanvas real{800,480,"Sticky Lotus integration tests"};
+#else
+    HeadlessCanvas real;
+#endif
     struct Label { std::string text; Rect area; int size; float rotation; };
     std::vector<Label> labels;
     int invalidations=0;
@@ -49,7 +57,9 @@ struct RecordedCanvas : Canvas {
 };
 int main() {
  try {
+#ifndef STICKY_HEADLESS_TEST
     SetConfigFlags(FLAG_WINDOW_HIDDEN);
+#endif
     RecordedCanvas canvas;
     TestInput input;
     app::Application app(canvas,input);
@@ -57,8 +67,10 @@ int main() {
         canvas.labels.clear(); canvas.highlightedPlayers=0; canvas.beginFrame(); app.draw();
         // Capture the current back buffer after flushing raylib's draw batch.
         if(screenshot) {
+#ifndef STICKY_HEADLESS_TEST
             rlDrawRenderBatchActive();
             TakeScreenshot(screenshot);
+#endif
         }
         canvas.endFrame();
     };
@@ -106,6 +118,74 @@ int main() {
     require(canvas.has("-1",28,180) && canvas.has("+1",28,0),"two-player signed/rotated badges");
     frame("two-players.png");
     app.resetGame(); frame(); require(!canvas.has("-1") && !canvas.has("+1"),"reset must clear badges");
+    // Test ping from every seat and both halves of each two-player panel.
+    for (auto mode : {PlayerMode::FourPlayers, PlayerMode::TwoPlayers}) {
+        for (std::size_t seat=0; seat<static_cast<std::size_t>(mode); ++seat) {
+            for (float localY : {60.0F,180.0F}) {
+                app.resetGame(); // Clear transient deltas between independent cases.
+                auto initial=app.createGameSnapshot();
+                initial.settings.playerMode=mode; initial.life.fill(40);
+                initial.poison.fill(0); for(auto& row:initial.commanderDamage) row.fill(0);
+                require(app.restoreGameSnapshot(initial),"ping restore");
+                // Restore sets starting totals; reset above clears transient labels.
+                const bool rotated=mode==PlayerMode::TwoPlayers ? seat==0 : seat<2;
+                const float x=(seat%2)*400.0F+200.0F;
+                const float y=mode==PlayerMode::TwoPlayers ? (localY==60 ? 100.0F : 380.0F) : (seat/2)*240.0F+localY;
+                const auto down=rotated ? TouchGesture::SwipeUp : TouchGesture::SwipeDown;
+                tap(x,y,down);
+                const auto result=app.createGameSnapshot();
+                for(std::size_t p=0;p<static_cast<std::size_t>(mode);++p)
+                    require(result.life[p]==(p==seat ? 40 : 39),"ping must affect every other active seat exactly once");
+                require(!canvas.has("POISON",14) && !canvas.has("COMMANDERDAMAGE",14),"game hint text still present");
+                tap(x,y,down);
+                require(canvas.has("-2"),"repeat ping must accumulate delta");
+                if(mode==PlayerMode::FourPlayers && seat==0 && localY==60)
+                    frame("ping-player1.png");
+            }
+        }
+    }
+    std::this_thread::sleep_for(4100ms); app.checkTimeouts(); frame();
+    require(!canvas.has("-2"),"ping delta must expire after four seconds");
+    // Screen-level routing keeps poison and Commander functions intact.
+    sticky_lotus::GameState routedGame;
+    app::NavigationState navigation;
+    commander::CommanderDamageDraft draft;
+    AppRenderer renderer(canvas);
+    screens::ScreenManager screens({routedGame,navigation,draft,renderer});
+    auto gesture=[&](float x,float y,TouchGesture g) {
+        InputFrame f{}; f.gesture={g,{x,y},{x,y}}; screens.handleInput(f);
+    };
+    for(auto mode : {PlayerMode::FourPlayers,PlayerMode::TwoPlayers}) {
+        routedGame.setPlayerMode(mode);
+        for(std::size_t seat=0;seat<routedGame.getPlayerCount();++seat) {
+            const bool rotated=renderer.isPlayerUpsideDown(seat,routedGame.getPlayerCount());
+            const auto area=renderer.getPlayerRectangle(seat,routedGame.getPlayerCount());
+            const float x=area.x+150, y=area.y+area.height*0.75F;
+            gesture(x,y,rotated ? TouchGesture::SwipeDown : TouchGesture::SwipeUp);
+            require(navigation.currentScreen()==app::ScreenId::Poison && navigation.selectedPlayer()==seat,"poison navigation broken");
+            gesture(x,area.y+area.height*(rotated ? 0.75F : 0.25F),TouchGesture::Tap);
+            require(routedGame.getPlayer(seat).poison==1,"poison editing broken");
+            auto before=routedGame.createSnapshot().life;
+            gesture(x,y,rotated ? TouchGesture::SwipeUp : TouchGesture::SwipeDown);
+            require(navigation.currentScreen()==app::ScreenId::Game && routedGame.createSnapshot().life==before,"closing poison must not ping");
+            for(auto sideways : {TouchGesture::SwipeLeft,TouchGesture::SwipeRight}) {
+                gesture(x,y,sideways);
+                require(navigation.currentScreen()==app::ScreenId::CommanderDamage && draft.isActive(),"Commander navigation broken");
+                gesture(x,y,sideways);
+                require(navigation.currentScreen()==app::ScreenId::Game && !draft.isActive(),"Commander exit broken");
+            }
+        }
+    }
+    routedGame.setPlayerMode(PlayerMode::FourPlayers);
+    routedGame.changeLife(1,-39); routedGame.changePoison(2,10);
+    gesture(200,100,TouchGesture::SwipeUp); // Player 1's downward swipe.
+    require(routedGame.getPlayer(0).life==40 && routedGame.getPlayer(1).life==0 &&
+            routedGame.getPlayer(2).life==40 && routedGame.getPlayer(3).life==39,
+            "ping must preserve elimination rules and life floor");
+    auto before=routedGame.createSnapshot().life;
+    gesture(400,240,TouchGesture::SwipeDown);
+    require(routedGame.createSnapshot().life==before,"menu-origin swipe must not ping");
+    std::cout << "PASS: ping all seats, player-relative directions, cumulative expiry, hidden hint text, poison edit/close, Commander navigation, elimination and menu guard.\n";
     sticky_lotus::GameState game;
     for(auto mode : {PlayerMode::TwoPlayers,PlayerMode::FourPlayers}) {
         game.setPlayerMode(mode); std::vector<bool> seen(game.getPlayerCount());
