@@ -8,6 +8,7 @@
 #include "icons/poison.h"
 #include "icons/skull_icon.h"
 #include "icons/cooppunks_social.h"
+#include "sleep/exonami_sleep.h"
 
 namespace sticky_lotus::ui
 {
@@ -2974,101 +2975,15 @@ namespace sticky_lotus::ui
             static_cast<float>(screenHeight)
         };
 
-        canvas_.drawLine(
-            {
-                100.0F,
-                70.0F
-            },
-            {
-                static_cast<float>(
-                    screenWidth
-                ) - 100.0F,
-                70.0F
-            },
-            2.0F,
-            Ink::Black
+        // Portrait artwork is pre-rotated clockwise into the landscape panel buffer.
+        canvas_.drawMonochromeBitmap(
+            assets::exonamiSleep,
+            screenWidth,
+            screenHeight,
+            screenWidth / 8,
+            fullScreen,
+            0.0F
         );
-
-        canvas_.drawText(
-            "Sticky Lotus",
-            {
-                100.0F,
-                100.0F,
-                static_cast<float>(
-                    screenWidth
-                ) - 200.0F,
-                60.0F
-            },
-            38,
-            Ink::Black,
-            TextAlignment::Center
-        );
-
-        canvas_.drawText(
-            "THE STACK IS EMPTY",
-            {
-                100.0F,
-                180.0F,
-                static_cast<float>(
-                    screenWidth
-                ) - 200.0F,
-                45.0F
-            },
-            25,
-            Ink::DarkGray,
-            TextAlignment::Center
-        );
-
-        canvas_.drawText(
-            "Press Power",
-            {
-                100.0F,
-                265.0F,
-                static_cast<float>(
-                    screenWidth
-                ) - 200.0F,
-                40.0F
-            },
-            24,
-            Ink::Black,
-            TextAlignment::Center
-        );
-
-        canvas_.drawText(
-            "to continue",
-            {
-                100.0F,
-                305.0F,
-                static_cast<float>(
-                    screenWidth
-                ) - 200.0F,
-                40.0F
-            },
-            22,
-            Ink::Black,
-            TextAlignment::Center
-        );
-
-        canvas_.drawLine(
-            {
-                100.0F,
-                static_cast<float>(
-                    screenHeight
-                ) - 70.0F
-            },
-            {
-                static_cast<float>(
-                    screenWidth
-                ) - 100.0F,
-                static_cast<float>(
-                    screenHeight
-                ) - 70.0F
-            },
-            2.0F,
-            Ink::Black
-        );
-
-        drawBatteryPercent();
 
         canvas_.invalidate(
             fullScreen
