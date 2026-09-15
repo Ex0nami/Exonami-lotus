@@ -20,9 +20,8 @@ it at 55%, in W/U/B/R/G order; white background, generous margins, no extra text
 
 `exonami-source.png` is the generated source.
 `exonami-portrait.png` is the final 480x800 one-bit portrait preview.
-`exonami_sleep.h` contains the 800x480 MSB-first panel framebuffer, rotated clockwise.
-The artwork is upright when the normal landscape screen's right edge is held at
-the top. Rotation is baked into the pixels because both existing Canvas backends
+`exonami-panel.png` previews the current 800x480 panel framebuffer.
+The panel artwork is rotated 90 degrees counterclockwise from the initial installed version. It is now upright in the normal landscape orientation. Only white margins are cropped; lettering and symbols retain their original size. Rotation is baked into the pixels because both existing Canvas backends
 only support 0 and 180 degree bitmap rotations.
 
 Recreate the framebuffer with `python custom/encode-sleep-art.py` (Pillow required).
@@ -35,3 +34,4 @@ is omitted to keep the artwork clean; the live game battery display is unchanged
 
 Windows simulator compiled successfully. Firmware build/physical sleep display
 are pending the user's local ESP-IDF build and subsequent installation.
+
