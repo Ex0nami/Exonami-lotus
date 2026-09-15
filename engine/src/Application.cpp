@@ -21,6 +21,8 @@ namespace sticky_lotus::app {
 
     void Application::tick()
     {
+        // Clear expired labels before an input can navigate back to the game.
+        checkTimeouts();
         /*
          * Aktuelle Sound-Einstellung an die Plattform durchreichen.
          *
@@ -71,6 +73,31 @@ namespace sticky_lotus::app {
         const auto now =
             std::chrono::steady_clock::now();
 
+        // Expire life bursts on every screen; only redraw a visible player.
+        for (
+            std::size_t playerIndex = 0;
+            playerIndex < game_.getPlayerCount();
+            ++playerIndex
+        ) {
+            if (!game_.hasLifeDeltaHighlight(playerIndex)) {
+                continue;
+            }
+
+            if (
+                now - game_.getLifeDeltaTimestamp(playerIndex) <
+                GameState::lifeDeltaTimeout
+            ) {
+                continue;
+            }
+
+            game_.clearLifeDeltaHighlight(playerIndex);
+
+            if (currentScreen == ScreenId::Game) {
+                renderer_.drawPlayerRegion(game_, playerIndex);
+            }
+        }
+
+
         if (currentScreen == ScreenId::Game) {
             if (game_.hasStartingPlayerHighlight()) {
                 constexpr std::chrono::seconds highlightTimeout{10};
@@ -89,30 +116,6 @@ namespace sticky_lotus::app {
                         highlightedPlayer
                     );
                 }
-            }
-
-            for (
-                std::size_t playerIndex = 0;
-                playerIndex < game_.getPlayerCount();
-                ++playerIndex
-            ) {
-                if (!game_.hasLifeDeltaHighlight(playerIndex)) {
-                    continue;
-                }
-
-                if (
-                    now - game_.getLifeDeltaTimestamp(playerIndex) <
-                    deltaTimeout
-                ) {
-                    continue;
-                }
-
-                game_.clearLifeDeltaHighlight(playerIndex);
-
-                renderer_.drawPlayerRegion(
-                    game_,
-                    playerIndex
-                );
             }
 
             return;

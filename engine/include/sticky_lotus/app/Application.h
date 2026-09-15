@@ -36,7 +36,7 @@ namespace sticky_lotus::app
          * letzten Eingabe 10 Sekunden ohne Aktivität vergangen sind.
          *
          * Blendet außerdem die Zähler-Änderungsanzeige (z.B. "-5")
-         * aus, sobald deren letzte Änderung 15 Sekunden zurückliegt -
+         * aus: Leben nach 4 Sekunden, andere Zähler nach 15 Sekunden -
          * pro Spieler auf dem Game-Screen (Leben) und dem Poison-
          * Screen (Gift), sowie pro Angreifer auf dem Commander-
          * Damage-Screen.

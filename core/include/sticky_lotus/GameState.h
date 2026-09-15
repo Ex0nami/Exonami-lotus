@@ -68,6 +68,8 @@ struct GameSnapshot
 class GameState
 {
 public:
+    static constexpr std::chrono::seconds lifeDeltaTimeout{4};
+
     static constexpr std::size_t maximumPlayerCount =
         sticky_lotus::maximumPlayerCount;
 

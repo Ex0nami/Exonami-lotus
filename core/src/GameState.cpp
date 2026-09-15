@@ -127,6 +127,13 @@ namespace sticky_lotus
 
         if (appliedChange != 0)
         {
+            const auto now = std::chrono::steady_clock::now();
+            // Start a new burst even if the UI has not serviced the timeout yet.
+            if (now - lifeDeltaTimestamp_[playerIndex] >= lifeDeltaTimeout)
+            {
+                clearLifeDeltaHighlight(playerIndex);
+            }
+
             lifeDelta_[playerIndex] +=
                 appliedChange;
 
@@ -134,7 +141,7 @@ namespace sticky_lotus
                 lifeDelta_[playerIndex] != 0;
 
             lifeDeltaTimestamp_[playerIndex] =
-                std::chrono::steady_clock::now();
+                now;
         }
 
         /*
