@@ -25,6 +25,7 @@ namespace sticky_lotus::screens {
         ScreenContext context_;
 
         void processTap(ui::Point position);
+        void processPing(ui::Point position);
         void processSwipe(
             const input::GestureEvent& gesture
         );

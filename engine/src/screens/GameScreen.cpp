@@ -1,6 +1,8 @@
 #include "sticky_lotus/screens/GameScreen.h"
 #include "sticky_lotus/ui/AppRenderer.h"
 
+#include <array>
+
 namespace
 {
     sticky_lotus::input::TouchGesture rotateGesture180(
@@ -36,13 +38,6 @@ namespace
         return TouchGesture::None;
     }
 
-    bool isUpperPlayerArea(
-        const sticky_lotus::ui::Point& position
-    )
-    {
-        return position.y <
-            sticky_lotus::ui::AppRenderer::screenHeight / 2.0F;
-    }
 } // namespace
 
 namespace sticky_lotus::screens
@@ -79,13 +74,7 @@ namespace sticky_lotus::screens
         TouchGesture effectiveGesture =
             inputFrame.gesture.gesture;
 
-        /*
-         * Nur Swipes in der oberen Displayhälfte drehen.
-         *
-         * Die Position selbst bleibt unverändert.
-         * Dadurch bleibt oben links auch oben links und
-         * unten links auch unten links.
-         */
+        // Interpret swipes from the selected player's reading orientation.
         const bool isSwipe =
             effectiveGesture == TouchGesture::SwipeLeft ||
             effectiveGesture == TouchGesture::SwipeRight ||
@@ -94,8 +83,9 @@ namespace sticky_lotus::screens
 
         if (
             isSwipe &&
-            isUpperPlayerArea(
-                inputFrame.gesture.startPosition
+            context_.renderer.isPlayerUpsideDown(
+                getPlayerIndex(inputFrame.gesture.startPosition),
+                context_.game.getPlayerCount()
             )
         )
         {
@@ -153,9 +143,48 @@ namespace sticky_lotus::screens
             }
 
         case TouchGesture::SwipeDown:
+            processPing(inputFrame.gesture.startPosition);
+            break;
 
         case TouchGesture::None:
             break;
+        }
+    }
+
+    void GameScreen::processPing(const ui::Point position)
+    {
+        if (position.x < 0 || position.x >= ui::AppRenderer::screenWidth ||
+            position.y < 0 || position.y >= ui::AppRenderer::screenHeight ||
+            context_.renderer.getMenuButtonRectangle().contains(position))
+        {
+            return;
+        }
+
+        const std::size_t sourcePlayer = getPlayerIndex(position);
+        const std::size_t playerCount = context_.game.getPlayerCount();
+        std::array<bool, maximumPlayerCount> changed{};
+        bool eliminationChanged = false;
+
+        for (std::size_t player = 0; player < playerCount; ++player)
+        {
+            if (player == sourcePlayer) continue;
+            const int before = context_.game.getPlayer(player).life;
+            const bool wasEliminated = context_.game.isPlayerEliminated(player);
+            // Reuse life rules and the same cumulative four-second badge.
+            context_.game.changeLife(player, -1);
+            changed[player] = before != context_.game.getPlayer(player).life;
+            eliminationChanged |= wasEliminated != context_.game.isPlayerEliminated(player);
+        }
+
+        if (eliminationChanged)
+        {
+            context_.renderer.drawGameImmediately(context_.game);
+            return;
+        }
+        for (std::size_t player = 0; player < playerCount; ++player)
+        {
+            if (changed[player])
+                context_.renderer.drawLifeCounterRegion(context_.game, player);
         }
     }
 

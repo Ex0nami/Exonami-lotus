@@ -1140,34 +1140,6 @@ namespace sticky_lotus::ui
             upsideDown
         );
 
-        /*
-         * Center statt Left-Alignment: die Textbreite von
-         * "POISON" wird hier nicht exakt gemessen (kein
-         * Zugriff auf die Font-Metriken von AppRenderer aus).
-         *
-         * Bei Center-Alignment bleibt der Text unabhängig von
-         * der tatsächlichen Breite symmetrisch um seine eigene
-         * Boxmitte - und spiegelt bei 180 Grad exakt um dieselbe
-         * Mitte zurück. Kein Risiko, dass er über den Bildschirm-
-         * rand hinaus gespiegelt wird, selbst wenn die geschätzte
-         * Box-Breite nicht exakt stimmt.
-         *
-         * Text liegt jetzt exakt unter der Lebenszahl (Center bei
-         * centerX), das Dreieck sitzt links davon.
-         */
-        canvas_.drawText(
-            "POISON",
-            {
-                centerX - 50.0F,
-                poisonRowY - 9.0F,
-                100.0F,
-                18.0F
-            },
-            14,
-            Ink::DarkGray,
-            TextAlignment::Center,
-            rotation
-        );
 
         /*
          * Zeile 2: Commander-Damage-Hinweis (seitlich wischen).
@@ -1191,28 +1163,6 @@ namespace sticky_lotus::ui
             Ink::DarkGray
         );
 
-        /*
-         * Großzügiger Breitenpuffer statt knapper Schätzung -
-         * siehe Kommentar bei "POISON" oben. "COMMANDERDAMAGE"
-         * lief vorher rechts über seine zu schmale Box hinaus,
-         * was sich bei den umgedrehten Feldern als Textmüll
-         * links über den Bildschirmrand hinaus gespiegelt hat.
-         *
-         * Ebenfalls exakt unter der Lebenszahl zentriert.
-         */
-        canvas_.drawText(
-            "COMMANDERDAMAGE",
-            {
-                centerX - 90.0F,
-                damageRowY - 9.0F,
-                180.0F,
-                18.0F
-            },
-            14,
-            Ink::DarkGray,
-            TextAlignment::Center,
-            rotation
-        );
 
         drawTriangleRight(
             {
