@@ -1091,90 +1091,6 @@ namespace sticky_lotus::ui
         );
     }
 
-    void AppRenderer::drawGestureHints(
-        const Rect& playerArea,
-        const float rotation
-    )
-    {
-        const bool upsideDown =
-            rotation == 180.0F;
-
-        const float centerX =
-            playerArea.x +
-            playerArea.width / 2.0F;
-
-        const float centerY =
-            playerArea.y +
-            playerArea.height / 2.0F;
-
-        /*
-         * Die Hinweiszeilen sollen immer auf der Außenseite der
-         * Zahl liegen (Richtung Bildschirmrand), nicht Richtung
-         * Bildschirmmitte/Menü-Button.
-         *
-         * Bei umgedrehten Spielern (obere Feldreihe) liegt die
-         * Außenseite auf der entgegengesetzten Seite der Feldmitte.
-         */
-        const float outwardSign =
-            upsideDown
-                ? -1.0F
-                : 1.0F;
-
-        /*
-         * Zeile 1: Poison-Hinweis (nach oben wischen).
-         *
-         * Ein einzelnes Symbol - muss wie Zahl und Text
-         * für umgedrehte Spieler gespiegelt werden.
-         */
-        const float poisonRowY =
-            centerY + outwardSign * 58.0F;
-
-        drawTriangleUp(
-            {
-                centerX - 37.5F,
-                poisonRowY - 5.5F,
-                11.0F,
-                11.0F
-            },
-            Ink::DarkGray,
-            upsideDown
-        );
-
-
-        /*
-         * Zeile 2: Commander-Damage-Hinweis (seitlich wischen).
-         *
-         * Die beiden Dreiecke bleiben unabhängig von der
-         * Spielerausrichtung immer gleich: Ein links-rechts-
-         * symmetrisches Paar sieht nach einer 180-Grad-Drehung
-         * wieder identisch aus - anders als das einzelne
-         * Poison-Symbol oben.
-         */
-        const float damageRowY =
-            centerY + outwardSign * 83.0F;
-
-        drawTriangleLeft(
-            {
-                centerX - 93.5F,
-                damageRowY - 5.5F,
-                11.0F,
-                11.0F
-            },
-            Ink::DarkGray
-        );
-
-
-        drawTriangleRight(
-            {
-                centerX + 82.5F,
-                damageRowY - 5.5F,
-                11.0F,
-                11.0F
-            },
-            Ink::DarkGray
-        );
-    }
-
     void AppRenderer::drawPlayer(
         const GameState& game,
         const std::size_t playerIndex,
@@ -1287,11 +1203,6 @@ namespace sticky_lotus::ui
                 42,
                 Ink::DarkGray,
                 TextAlignment::Center,
-                rotation
-            );
-
-            drawGestureHints(
-                playerArea,
                 rotation
             );
 
@@ -2499,10 +2410,7 @@ namespace sticky_lotus::ui
          * Nur einen etwas kleineren inneren Bereich löschen.
          * Dadurch bleiben die Trennlinien der Spielerfelder erhalten.
          *
-         * lifeArea deckt die komplette Feldhöhe ab (nicht nur die
-         * sichtbare Zahl), also auch den Bereich der Gesten-Hinweise
-         * darunter/darüber - die werden hier also mitgelöscht und
-         * müssen deshalb unten explizit neu gezeichnet werden.
+         * lifeArea covers the full height of the counter area.
          */
         constexpr float horizontalInset = 10.0F;
         constexpr float verticalInset = 8.0F;
@@ -2539,15 +2447,6 @@ namespace sticky_lotus::ui
             rotation
         );
 
-        /*
-         * Wurden vom fillRect() oben mitgelöscht - müssen bei
-         * jedem Life-Update neu gezeichnet werden.
-         */
-        drawGestureHints(
-            playerArea,
-            rotation
-        );
-
         drawLifeDeltaBadge(
             game,
             playerIndex,
@@ -2556,10 +2455,7 @@ namespace sticky_lotus::ui
         );
 
         /*
-         * Muss das komplette Spielerfeld abdecken, nicht nur
-         * lifeRedrawArea - sonst wird der Refresh für die
-         * Gesten-Hinweise auf echter Hardware nicht ausgelöst,
-         * auch wenn der Framebuffer bereits korrekt ist.
+         * Include the corner delta badges in the hardware refresh region.
          */
         canvas_.invalidate(
             playerArea

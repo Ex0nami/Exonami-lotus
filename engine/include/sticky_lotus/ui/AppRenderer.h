@@ -237,11 +237,6 @@ namespace sticky_lotus::ui
             Ink ink
         );
 
-        void drawGestureHints(
-            const Rect& playerArea,
-            float rotation
-        );
-
         /**
          * Zeichnet die Anzeige der zuletzt veränderten Lebenspunkte
          * eines Spielers (z.B. "-5") in dessen oberer linker Ecke
