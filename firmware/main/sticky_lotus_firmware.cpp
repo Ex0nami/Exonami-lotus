@@ -10,8 +10,6 @@
 #include "sticky_board.h"
 #include "sticky_board_config.h"
 
-#include "sticky_lotus_1bit.h"
-
 #include "driver/gpio.h"
 
 #include "esp_check.h"
@@ -388,23 +386,8 @@ namespace sticky_lotus_firmware
                 );
             }
 
-            /*
-             * Fertigen 1-Bit-Sleep-Screen direkt in den
-             * Sticky-Framebuffer übernehmen.
-             */
-            canvas.drawMonochromeBitmap(
-                sticky_lotus_fb,
-                STICKY_LOTUS_FB_WIDTH,
-                STICKY_LOTUS_FB_HEIGHT,
-                STICKY_LOTUS_FB_BYTES_PER_ROW,
-                sticky_lotus::ui::Rect{
-                    0.0F,
-                    0.0F,
-                    static_cast<float>(STICKY_LOTUS_FB_WIDTH),
-                    static_cast<float>(STICKY_LOTUS_FB_HEIGHT)
-                },
-                0.0F
-            );
+            // Use the same custom sleep artwork as the desktop application.
+            application.showSleepScreen();
 
             /*
              * Das Bild sofort vollständig auf das E-Paper übertragen.

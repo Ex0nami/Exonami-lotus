@@ -28,7 +28,8 @@ only support 0 and 180 degree bitmap rotations.
 Recreate the framebuffer with `python custom/encode-sleep-art.py` (Pillow required).
 The converter verifies that decoding and unrotating the bytes exactly recovers
 the one-bit portrait preview. The runtime uses the same bitmap on desktop and
-hardware. Only AppRenderer::drawSleepScreen changes. Sleep entry, saved state,
+hardware. Hardware sleep now calls Application::showSleepScreen so it uses this same
+renderer instead of the upstream hardware-only bitmap. Saved state,
 power controls and wakeup handling remain unchanged. The sleep-only battery text
 is omitted to keep the artwork clean; the live game battery display is unchanged.
 
