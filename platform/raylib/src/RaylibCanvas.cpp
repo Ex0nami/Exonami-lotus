@@ -1,6 +1,7 @@
 #include "sticky_lotus_raylib/RaylibCanvas.h"
 
 #include <string>
+#include <algorithm>
 
 namespace sticky_lotus_raylib
 {

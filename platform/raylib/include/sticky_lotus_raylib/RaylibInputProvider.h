@@ -26,6 +26,7 @@ namespace sticky_lotus_raylib {
         static constexpr float swipeThreshold = 60.0F;
 
         bool gestureActive_ = false;
+        double gestureStartTime_ = 0.0;
         sticky_lotus::ui::Point gestureStart_{};
 
         [[nodiscard]]

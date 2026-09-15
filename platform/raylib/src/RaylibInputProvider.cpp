@@ -54,6 +54,7 @@ GestureEvent RaylibInputProvider::updateGesture(
     if (pointer.pressed) {
         gestureStart_ = pointer.position;
         gestureActive_ = true;
+        gestureStartTime_ = GetTime();
     }
 
     // Erst beim Loslassen wird die Geste ausgewertet.
@@ -97,6 +98,12 @@ GestureEvent RaylibInputProvider::updateGesture(
                     ? TouchGesture::SwipeUp
                     : TouchGesture::SwipeDown;
         }
+    }
+
+    // Match Sticky's 250 ms hold threshold; swipes still take precedence.
+    if (detectedGesture == TouchGesture::Tap &&
+        GetTime() - gestureStartTime_ >= 0.25) {
+        detectedGesture = TouchGesture::LongPress;
     }
 
     return {
