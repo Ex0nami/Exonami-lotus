@@ -22,6 +22,7 @@ namespace sticky_lotus::screens {
         );
 
         void draw();
+        void cancelPingUndo() { gameScreen_.cancelPingUndo(); }
 
     private:
         ScreenContext context_;

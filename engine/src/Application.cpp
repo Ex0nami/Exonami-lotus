@@ -213,6 +213,7 @@ namespace sticky_lotus::app {
 
     void Application::resetGame()
     {
+        screenManager_.cancelPingUndo();
         lastInputTime_ =
             std::chrono::steady_clock::now();
 
@@ -240,6 +241,7 @@ namespace sticky_lotus::app {
     }
     void Application::showSleepScreen()
     {
+        screenManager_.cancelPingUndo();
         renderer_.drawSleepScreen();
     }
     GameSnapshot Application::createGameSnapshot() const
@@ -251,6 +253,7 @@ namespace sticky_lotus::app {
         const GameSnapshot& snapshot
     )
     {
+        screenManager_.cancelPingUndo();
         const bool restored =
             game_.restoreSnapshot(
                 snapshot

@@ -55,6 +55,10 @@ namespace sticky_lotus::screens
         const input::InputFrame& inputFrame
     )
     {
+        if (inputFrame.buttons.centerPressed || inputFrame.buttons.leftPressed ||
+            inputFrame.buttons.rightPressed)
+            pingUndoActive_ = false;
+
         if (inputFrame.buttons.centerPressed)
         {
             context_.navigation.showSettings();
@@ -94,6 +98,14 @@ namespace sticky_lotus::screens
                     effectiveGesture
                 );
         }
+
+        if (effectiveGesture == TouchGesture::SwipeUp &&
+            undoPing(inputFrame.gesture.startPosition))
+            return;
+
+        // Any other action consumes the opportunity; idle frames do not.
+        if (effectiveGesture != TouchGesture::None)
+            pingUndoActive_ = false;
 
         switch (effectiveGesture)
         {
@@ -164,6 +176,9 @@ namespace sticky_lotus::screens
         const std::size_t playerCount = context_.game.getPlayerCount();
         std::array<bool, maximumPlayerCount> changed{};
         bool eliminationChanged = false;
+        pingLoss_.fill(0);
+        pingSource_ = sourcePlayer;
+        pingPlayerCount_ = playerCount;
 
         for (std::size_t player = 0; player < playerCount; ++player)
         {
@@ -173,9 +188,12 @@ namespace sticky_lotus::screens
             // Reuse life rules and the same cumulative four-second badge.
             context_.game.changeLife(player, -1);
             changed[player] = before != context_.game.getPlayer(player).life;
+            pingLoss_[player] = before - context_.game.getPlayer(player).life;
+            pingUndoActive_ |= changed[player];
             eliminationChanged |= wasEliminated != context_.game.isPlayerEliminated(player);
         }
 
+        pingTime_ = std::chrono::steady_clock::now();
         if (eliminationChanged)
         {
             context_.renderer.drawGameImmediately(context_.game);
@@ -186,6 +204,35 @@ namespace sticky_lotus::screens
             if (changed[player])
                 context_.renderer.drawLifeCounterRegion(context_.game, player);
         }
+    }
+
+    bool GameScreen::undoPing(const ui::Point position)
+    {
+        if (!pingUndoActive_ ||
+            std::chrono::steady_clock::now() - pingTime_ >= std::chrono::seconds(4) ||
+            pingPlayerCount_ != context_.game.getPlayerCount() ||
+            position.x < 0 || position.x >= ui::AppRenderer::screenWidth ||
+            position.y < 0 || position.y >= ui::AppRenderer::screenHeight ||
+            context_.renderer.getMenuButtonRectangle().contains(position) ||
+            getPlayerIndex(position) != pingSource_)
+            return false;
+
+        pingUndoActive_ = false;
+        bool eliminationChanged = false;
+        for (std::size_t player = 0; player < pingPlayerCount_; ++player)
+        {
+            if (pingLoss_[player] == 0) continue;
+            const bool wasEliminated = context_.game.isPlayerEliminated(player);
+            context_.game.changeLife(player, pingLoss_[player]);
+            eliminationChanged |= wasEliminated != context_.game.isPlayerEliminated(player);
+        }
+        if (eliminationChanged)
+            context_.renderer.drawGameImmediately(context_.game);
+        else
+            for (std::size_t player = 0; player < pingPlayerCount_; ++player)
+                if (pingLoss_[player] != 0)
+                    context_.renderer.drawLifeCounterRegion(context_.game, player);
+        return true;
     }
 
     void GameScreen::processTap(

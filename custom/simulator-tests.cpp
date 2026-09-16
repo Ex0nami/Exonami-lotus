@@ -139,6 +139,11 @@ int main() {
                 require(!canvas.has("POISON",14) && !canvas.has("COMMANDERDAMAGE",14),"game hint text still present");
                 tap(x,y,down);
                 require(canvas.has("-2"),"repeat ping must accumulate delta");
+                tap(x,y,rotated ? TouchGesture::SwipeDown : TouchGesture::SwipeUp);
+                for(std::size_t p=0;p<static_cast<std::size_t>(mode);++p)
+                    require(app.createGameSnapshot().life[p]==(p==seat ? 40 : 39),"undo must reverse only latest ping from every orientation");
+                require(canvas.has("-1"),"undo must subtract from cumulative delta");
+                tap(x,y,down);
                 if(mode==PlayerMode::FourPlayers && seat==0 && localY==60)
                     frame("ping-player1.png");
             }
@@ -146,6 +151,18 @@ int main() {
     }
     std::this_thread::sleep_for(4100ms); app.checkTimeouts(); frame();
     require(!canvas.has("-2"),"ping delta must expire after four seconds");
+    for(int action=0;action<3;++action) {
+        app.resetGame();
+        auto initial=app.createGameSnapshot(); initial.settings.playerMode=PlayerMode::FourPlayers;
+        initial.life.fill(40); require(app.restoreGameSnapshot(initial),"undo lifecycle setup");
+        tap(200,100,TouchGesture::SwipeUp);
+        if(action==0) app.resetGame();
+        if(action==1) require(app.restoreGameSnapshot(app.createGameSnapshot()),"undo lifecycle restore");
+        if(action==2) app.showSleepScreen();
+        const auto lifeBefore=app.createGameSnapshot().life;
+        tap(200,100,TouchGesture::SwipeDown);
+        require(app.createGameSnapshot().life==lifeBefore,"reset, restore and sleep must cancel undo");
+    }
     // Screen-level routing keeps poison and Commander functions intact.
     sticky_lotus::GameState routedGame;
     app::NavigationState navigation;
@@ -183,6 +200,31 @@ int main() {
             routedGame.getPlayer(2).life==40 && routedGame.getPlayer(3).life==39,
             "ping must preserve elimination rules and life floor");
     auto before=routedGame.createSnapshot().life;
+    gesture(200,100,TouchGesture::SwipeDown);
+    require(routedGame.getPlayer(1).life==1 && routedGame.getPlayer(2).life==40 &&
+            routedGame.getPlayer(3).life==40 && navigation.currentScreen()==app::ScreenId::Game,
+            "undo must revive life elimination and leave poison-eliminated player alone");
+    gesture(200,100,TouchGesture::SwipeDown);
+    require(navigation.currentScreen()==app::ScreenId::Poison,"undo must be single-use");
+    gesture(200,100,TouchGesture::SwipeUp); // Close poison.
+    gesture(200,100,TouchGesture::SwipeUp); // Ping.
+    std::this_thread::sleep_for(4100ms);
+    gesture(200,100,TouchGesture::SwipeDown);
+    require(navigation.currentScreen()==app::ScreenId::Poison,"expired undo must open poison");
+    gesture(200,100,TouchGesture::SwipeUp);
+    gesture(200,100,TouchGesture::SwipeUp);
+    gesture(600,360,TouchGesture::SwipeUp);
+    require(navigation.currentScreen()==app::ScreenId::Poison && navigation.selectedPlayer()==3,"other player swipe must open poison");
+    gesture(600,360,TouchGesture::SwipeDown);
+    gesture(200,100,TouchGesture::SwipeDown);
+    require(navigation.currentScreen()==app::ScreenId::Poison,"navigation must cancel pending undo");
+    gesture(200,100,TouchGesture::SwipeUp);
+    gesture(200,100,TouchGesture::SwipeUp);
+    gesture(50,100,TouchGesture::Tap);
+    gesture(200,100,TouchGesture::SwipeDown);
+    require(navigation.currentScreen()==app::ScreenId::Poison,"life tap must cancel undo");
+    gesture(200,100,TouchGesture::SwipeUp);
+    before=routedGame.createSnapshot().life;
     gesture(400,240,TouchGesture::SwipeDown);
     require(routedGame.createSnapshot().life==before,"menu-origin swipe must not ping");
     std::cout << "PASS: ping all seats, player-relative directions, cumulative expiry, hidden hint text, poison edit/close, Commander navigation, elimination and menu guard.\n";

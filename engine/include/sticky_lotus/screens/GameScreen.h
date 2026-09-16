@@ -4,6 +4,8 @@
 #include "sticky_lotus/screens/ScreenContext.h"
 
 #include <cstddef>
+#include <array>
+#include <chrono>
 
 namespace sticky_lotus::screens {
 
@@ -20,9 +22,17 @@ namespace sticky_lotus::screens {
         ) override;
 
         void draw() override;
+        void cancelPingUndo() { pingUndoActive_ = false; }
+        void onExit() override { cancelPingUndo(); }
 
     private:
         ScreenContext context_;
+        bool pingUndoActive_ = false;
+        std::size_t pingSource_ = 0;
+        std::size_t pingPlayerCount_ = 0;
+        std::array<int, maximumPlayerCount> pingLoss_{};
+        std::chrono::steady_clock::time_point pingTime_{};
+        bool undoPing(ui::Point position);
 
         void processTap(ui::Point position);
         void processPing(ui::Point position);
