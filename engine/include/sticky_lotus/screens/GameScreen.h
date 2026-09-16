@@ -46,9 +46,9 @@ namespace sticky_lotus::screens {
         ) const;
 
         [[nodiscard]]
-        static int getLifeChange(
+        int getLifeChange(
             ui::Point position
-        );
+        ) const;
         void processLongPress(
             ui::Point position
         );

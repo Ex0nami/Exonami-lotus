@@ -1423,6 +1423,11 @@ namespace sticky_lotus::ui
         );
 
         drawSettingsButton(
+            getThreePlayersButtonRectangle(), "3",
+            game.getSettings().playerMode == PlayerMode::ThreePlayers
+        );
+
+        drawSettingsButton(
             getFourPlayersButtonRectangle(),
             "4",
             game.getSettings().playerMode ==
@@ -1652,6 +1657,11 @@ namespace sticky_lotus::ui
             "2",
             game.getSettings().playerMode ==
             PlayerMode::TwoPlayers
+        );
+
+        drawSettingsButton(
+            getThreePlayersButtonRectangle(), "3",
+            game.getSettings().playerMode == PlayerMode::ThreePlayers
         );
 
         drawSettingsButton(
@@ -1927,22 +1937,17 @@ namespace sticky_lotus::ui
 
     Rect AppRenderer::getTwoPlayersButtonRectangle() const
     {
-        return {
-            70.0F,
-            125.0F,
-            125.0F,
-            44.0F
-        };
+        return {70.0F, 125.0F, 80.0F, 44.0F};
+    }
+
+    Rect AppRenderer::getThreePlayersButtonRectangle() const
+    {
+        return {162.5F, 125.0F, 80.0F, 44.0F};
     }
 
     Rect AppRenderer::getFourPlayersButtonRectangle() const
     {
-        return {
-            210.0F,
-            125.0F,
-            125.0F,
-            44.0F
-        };
+        return {255.0F, 125.0F, 80.0F, 44.0F};
     }
 
     Rect AppRenderer::getSoundOnButtonRectangle() const

@@ -495,51 +495,18 @@ namespace sticky_lotus::screens
         const ui::Point position
     ) const
     {
-        if (context_.game.getPlayerCount() == 2)
-        {
-            return position.x <
-                   ui::AppRenderer::screenWidth / 2.0F
-                       ? 0
-                       : 1;
-        }
-
-        constexpr float cellWidth =
-            ui::AppRenderer::screenWidth / 2.0F;
-
-        constexpr float cellHeight =
-            ui::AppRenderer::screenHeight / 2.0F;
-
-        const int column =
-            position.x < cellWidth ? 0 : 1;
-
-        const int row =
-            position.y < cellHeight ? 0 : 1;
-
-        return static_cast<std::size_t>(
-            row * 2 + column
-        );
+        for (std::size_t player = 0; player < context_.game.getPlayerCount(); ++player)
+            if (context_.renderer.getPlayerRectangle(player, context_.game.getPlayerCount()).contains(position))
+                return player;
+        return context_.game.getPlayerCount();
     }
 
-    int GameScreen::getLifeChange(
-        const ui::Point position
-    )
+    int GameScreen::getLifeChange(const ui::Point position) const
     {
-        constexpr float cellWidth =
-            ui::AppRenderer::screenWidth / 2.0F;
-
-        const int column =
-            static_cast<int>(
-                position.x / cellWidth
-            );
-
-        const float localX =
-            position.x -
-            static_cast<float>(column) *
-            cellWidth;
-
-        return localX < cellWidth / 2.0F
-                   ? -1
-                   : 1;
+        const auto player = getPlayerIndex(position);
+        if (player >= context_.game.getPlayerCount()) return 0;
+        const auto area = context_.renderer.getPlayerRectangle(player, context_.game.getPlayerCount());
+        return position.x < area.x + area.width / 2.0F ? -1 : 1;
     }
 
     void GameScreen::draw()

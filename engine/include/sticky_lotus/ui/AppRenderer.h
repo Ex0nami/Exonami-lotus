@@ -52,6 +52,7 @@ namespace sticky_lotus::ui
 
         [[nodiscard]]
         Rect getTwoPlayersButtonRectangle() const;
+        Rect getThreePlayersButtonRectangle() const;
 
         [[nodiscard]]
         Rect getFourPlayersButtonRectangle() const;

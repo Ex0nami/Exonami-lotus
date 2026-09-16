@@ -118,8 +118,20 @@ int main() {
     require(canvas.has("-1",28,180) && canvas.has("+1",28,0),"two-player signed/rotated badges");
     frame("two-players.png");
     app.resetGame(); frame(); require(!canvas.has("-1") && !canvas.has("+1"),"reset must clear badges");
+    // Select the new mode through the actual settings control.
+    tap(400,240); tap(202,147); tap(645,411);
+    require(app.createGameSnapshot().settings.playerMode==PlayerMode::ThreePlayers,"three-player settings button");
+    frame("three-players.png");
+    require(app.createGameSnapshot().life[0]==40,"three-player multiplayer starting life");
+    tap(300,100); tap(500,100); tap(700,100,TouchGesture::LongPress);
+    require(app.createGameSnapshot().life[0]==30,"full-width top panel must split at screen center");
+    tap(50,360); tap(750,360);
+    require(app.createGameSnapshot().life[1]==39 && app.createGameSnapshot().life[2]==41 && app.createGameSnapshot().life[3]==40,"bottom life touch areas and inactive fourth seat");
+    frame("three-players-changes.png");
+    const auto threeSaved=app.createGameSnapshot(); app.resetGame();
+    require(app.restoreGameSnapshot(threeSaved) && app.createGameSnapshot().life==threeSaved.life && app.createGameSnapshot().settings.playerMode==PlayerMode::ThreePlayers,"three-player snapshot roundtrip");
     // Test ping from every seat and both halves of each two-player panel.
-    for (auto mode : {PlayerMode::FourPlayers, PlayerMode::TwoPlayers}) {
+    for (auto mode : {PlayerMode::FourPlayers, PlayerMode::ThreePlayers, PlayerMode::TwoPlayers}) {
         for (std::size_t seat=0; seat<static_cast<std::size_t>(mode); ++seat) {
             for (float localY : {60.0F,180.0F}) {
                 app.resetGame(); // Clear transient deltas between independent cases.
@@ -128,9 +140,9 @@ int main() {
                 initial.poison.fill(0); for(auto& row:initial.commanderDamage) row.fill(0);
                 require(app.restoreGameSnapshot(initial),"ping restore");
                 // Restore sets starting totals; reset above clears transient labels.
-                const bool rotated=mode==PlayerMode::TwoPlayers ? seat==0 : seat<2;
-                const float x=(seat%2)*400.0F+200.0F;
-                const float y=mode==PlayerMode::TwoPlayers ? (localY==60 ? 100.0F : 380.0F) : (seat/2)*240.0F+localY;
+                const bool rotated=mode!=PlayerMode::FourPlayers ? seat==0 : seat<2;
+                const float x=mode==PlayerMode::ThreePlayers ? (seat==0 ? 400.0F : (seat-1)*400.0F+200.0F) : (seat%2)*400.0F+200.0F;
+                const float y=mode==PlayerMode::TwoPlayers ? (localY==60 ? 100.0F : 380.0F) : (mode==PlayerMode::ThreePlayers ? (seat==0 ? 0.0F : 240.0F) : (seat/2)*240.0F)+localY;
                 const auto down=rotated ? TouchGesture::SwipeUp : TouchGesture::SwipeDown;
                 tap(x,y,down);
                 const auto result=app.createGameSnapshot();
@@ -172,7 +184,7 @@ int main() {
     auto gesture=[&](float x,float y,TouchGesture g) {
         InputFrame f{}; f.gesture={g,{x,y},{x,y}}; screens.handleInput(f);
     };
-    for(auto mode : {PlayerMode::FourPlayers,PlayerMode::TwoPlayers}) {
+    for(auto mode : {PlayerMode::FourPlayers,PlayerMode::ThreePlayers,PlayerMode::TwoPlayers}) {
         routedGame.setPlayerMode(mode);
         for(std::size_t seat=0;seat<routedGame.getPlayerCount();++seat) {
             const bool rotated=renderer.isPlayerUpsideDown(seat,routedGame.getPlayerCount());
@@ -229,7 +241,9 @@ int main() {
     require(routedGame.createSnapshot().life==before,"menu-origin swipe must not ping");
     std::cout << "PASS: ping all seats, player-relative directions, cumulative expiry, hidden hint text, poison edit/close, Commander navigation, elimination and menu guard.\n";
     sticky_lotus::GameState game;
-    for(auto mode : {PlayerMode::TwoPlayers,PlayerMode::FourPlayers}) {
+    game.setPlayerMode(PlayerMode::ThreePlayers); game.setMultiplayerStartingLife(30);
+    require(game.getPlayerCount()==3 && game.getPlayer(0).life==30 && game.getPlayer(2).life==30,"three-player starting life setting must reset game");
+    for(auto mode : {PlayerMode::TwoPlayers,PlayerMode::ThreePlayers,PlayerMode::FourPlayers}) {
         game.setPlayerMode(mode); std::vector<bool> seen(game.getPlayerCount());
         for(int n=0;n<512;++n) { game.rollStartingPlayer(); require(game.hasStartingPlayerHighlight(),"roll disabled"); auto p=game.getStartingPlayerHighlight(); require(p<game.getPlayerCount(),"roll outside active players"); seen[p]=true; }
         require(std::all_of(seen.begin(),seen.end(),[](bool v){return v;}),"roll never selected one of active players");

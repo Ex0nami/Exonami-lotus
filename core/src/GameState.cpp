@@ -178,8 +178,8 @@ namespace sticky_lotus
             life;
 
         if (
-            settings_.playerMode ==
-            PlayerMode::FourPlayers
+            settings_.playerMode !=
+            PlayerMode::TwoPlayers
         )
         {
             reset();
