@@ -269,6 +269,8 @@ namespace sticky_lotus_firmware
                 );
 
             if (result == ESP_OK)
+                result = nvs_set_i32(handle, "dice_sides", application.diceSides());
+            if (result == ESP_OK)
             {
                 result =
                     nvs_commit(
@@ -316,6 +318,10 @@ namespace sticky_lotus_firmware
                     &snapshot,
                     &size
                 );
+
+            std::int32_t diceSides = 6;
+            if (nvs_get_i32(handle, "dice_sides", &diceSides) == ESP_OK)
+                application.setDiceSides(diceSides);
 
             nvs_close(
                 handle
@@ -782,11 +788,7 @@ namespace sticky_lotus_firmware
         std::int64_t upButtonPressStartUs =
             0;
 
-        /*
-         * Verhindert wiederholtes Zurücksetzen, solange die Taste
-         * über die Haltezeit hinaus gedrückt bleibt - anders als
-         * enterDeepSleep() kehrt resetGame() normal zurück.
-         */
+        // Fire the selector only once per hold.
         bool upButtonHoldTriggered =
             false;
 
@@ -881,15 +883,10 @@ namespace sticky_lotus_firmware
             previousDownButtonPressed =
                 downButtonPressed;
 
-            /*
-             * Mittlere Taste: Spiel zurücksetzen bei 3s Halten.
-             *
-             * Bewusst eine deutlich längere Haltezeit als bei
-             * Deep Sleep, da ein Reset destruktiv und nicht
-             * rückgängig zu machen ist.
-             */
+            // Middle button: short release rolls, 800ms hold opens selector.
+            // Releasing a long hold does not also roll; reset remains in Settings.
             constexpr std::int64_t upButtonHoldUs =
-                3LL * 1'000'000LL;
+                800'000LL;
 
             const bool upButtonPressed =
                 isUpButtonPressed();
@@ -914,7 +911,7 @@ namespace sticky_lotus_firmware
                 upButtonHoldUs
             )
             {
-                application.resetGame();
+                application.showDiceSelector();
 
                 upButtonHoldTriggered =
                     true;
@@ -922,6 +919,10 @@ namespace sticky_lotus_firmware
 
             if (!upButtonPressed)
             {
+                if (previousUpButtonPressed && !upButtonHoldTriggered &&
+                    upButtonPressStartUs != 0 &&
+                    esp_timer_get_time() - upButtonPressStartUs >= 50'000LL)
+                    application.rollDice();
                 upButtonPressStartUs =
                     0;
 

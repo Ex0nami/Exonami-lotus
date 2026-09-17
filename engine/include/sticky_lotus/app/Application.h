@@ -60,6 +60,10 @@ namespace sticky_lotus::app
          * rollStartingPlayer() und der Power-Button.
          */
         void resetGame();
+        void rollDice();
+        void showDiceSelector();
+        int diceSides() const { return diceSides_; }
+        void setDiceSides(int sides);
 
         void draw();
 
@@ -75,6 +79,12 @@ namespace sticky_lotus::app
             const GameSnapshot& snapshot
         );
     private:
+        int diceSides_ = 6;
+        int diceResult_ = 1;
+        enum class DiceView { Closed, Selector, Result };
+        DiceView diceView_ = DiceView::Closed;
+        std::chrono::steady_clock::time_point diceShownAt_{};
+        void closeDice();
         GameState game_;
         NavigationState navigation_;
         commander::CommanderDamageDraft commanderDraft_;

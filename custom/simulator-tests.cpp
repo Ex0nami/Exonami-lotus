@@ -78,6 +78,35 @@ int main() {
         input.next.gesture={gesture,{x,y},{x,y}}; app.tick(); app.checkTimeouts(); frame();
     };
     frame();
+    const auto beforeDice=app.createGameSnapshot();
+    require(app.diceSides()==6,"default die must be D6");
+    app.setDiceSides(7); require(app.diceSides()==6,"invalid stored die must be ignored");
+    input.next.diceSelectorPressed=true; app.tick(); frame("dice-selector.png");
+    require(canvas.has("Choose a die or coin",28),"selector missing");
+    tap(390,240); require(app.diceSides()==6,"D6 selection");
+    for (int sides : {2,6,20}) {
+        app.showDiceSelector();
+        tap(sides==2 ? 200 : sides==6 ? 390 : 560,240);
+        require(app.diceSides()==sides,"selector choice");
+        std::vector<bool> seen(sides);
+        for(int n=0;n<512;++n) {
+            input.next.dicePressed=true; app.tick(); frame();
+            int result=0;
+            for(const auto& label:canvas.labels) if(label.size==80) {
+                result=sides==2 ? (label.text=="HEADS" ? 1 : label.text=="TAILS" ? 2 : 0) : std::stoi(label.text);
+            }
+            require(result>=1 && result<=sides,"dice result out of range"); seen[result-1]=true;
+        }
+        require(std::all_of(seen.begin(),seen.end(),[](bool v){return v;}),"dice outcome unreachable");
+    }
+    frame("dice-result.png");
+    tap(50,360); // Dismiss only, never subtract life.
+    require(app.createGameSnapshot().life==beforeDice.life,"dice modal changed life");
+    app.rollDice(); std::this_thread::sleep_for(3100ms); app.checkTimeouts(); frame();
+    require(!canvas.has("D20",28),"dice result did not expire");
+    app.showDiceSelector(); input.next.cancelPressed=true; app.tick(); frame();
+    require(!canvas.has("Choose a die or coin",28),"selector cancel");
+    require(app.createGameSnapshot().poison==beforeDice.poison && app.createGameSnapshot().commanderDamage==beforeDice.commanderDamage,"dice altered counters");
     for(int i=0;i<7;++i) tap(50,360);
     require(app.createGameSnapshot().life[2]==33,"seven taps: expected 33 life");
     require(canvas.has("-7",28,0),"missing cumulative -7");

@@ -19,6 +19,27 @@ namespace sticky_lotus::ui
     {
     }
 
+    void AppRenderer::drawDice(bool selector, int sides, int result)
+    {
+        const Rect panel{110, 115, 580, 250};
+        canvas_.fillRoundedRect(panel, 18, Ink::White);
+        canvas_.drawRoundedRect(panel, 18, 3, Ink::Black);
+        canvas_.drawText(selector ? "Choose a die or coin" : (sides == 2 ? "COIN" : (sides == 6 ? "D6" : "D20")),
+                         {130, 135, 540, 40}, 28, Ink::Black);
+        if (selector) {
+            const int values[]{2, 6, 20};
+            const char* labels[]{"Coin", "D6", "D20"};
+            for (int i = 0; i < 3; ++i)
+                drawSettingsButton(diceOptionArea(i), labels[i], sides == values[i]);
+            canvas_.drawText("Tap to select", {130, 305, 540, 30}, 22, Ink::Black);
+        } else {
+            const std::string value = sides == 2 ? (result == 1 ? "HEADS" : "TAILS") : std::to_string(result);
+            canvas_.drawText(value, {130, 190, 540, 125}, 80, Ink::Black);
+        }
+        canvas_.invalidate(panel);
+        canvas_.flush();
+    }
+
     void AppRenderer::drawGame(
         const GameState& game
     )
@@ -1826,7 +1847,7 @@ namespace sticky_lotus::ui
          * URL
          */
         canvas_.drawText(
-            "lotus.cooppunks.social",
+            "",
             {
                 brandingX,
                 185.0F,
@@ -1872,7 +1893,7 @@ namespace sticky_lotus::ui
          * by ink 2026
          */
         canvas_.drawText(
-            "by ink 2026",
+            "by Exonami",
             {
                 cooppunksLogoArea.x +
                 cooppunksLogoArea.width +
@@ -1896,7 +1917,7 @@ namespace sticky_lotus::ui
          * Version
          */
         canvas_.drawText(
-            "v1.1",
+            "v1.2",
             {
                 brandingX,
                 cooppunksLogoArea.y +

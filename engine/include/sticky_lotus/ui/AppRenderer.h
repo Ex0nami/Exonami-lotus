@@ -38,6 +38,8 @@ namespace sticky_lotus::ui
          * Zeichnet die Settings-Ansicht.
          */
         void drawSettings(const GameState& game);
+        void drawDice(bool selector, int sides, int result);
+        static Rect diceOptionArea(int index) { return {150.0F + index * 170.0F, 210.0F, 160.0F, 70.0F}; }
 
         void drawCommanderDamage(
             const GameState& game,

@@ -71,6 +71,8 @@ namespace sticky_lotus::input {
         HardwareButtonState buttons{};
 
         bool cancelPressed = false;
+        bool dicePressed = false;
+        bool diceSelectorPressed = false;
     };
 
     /**

@@ -1,4 +1,5 @@
 #include "sticky_lotus/app/Application.h"
+#include <random>
 
 namespace sticky_lotus::app {
 
@@ -22,6 +23,7 @@ namespace sticky_lotus::app {
     void Application::tick()
     {
         // Clear expired labels before an input can navigate back to the game.
+        const bool diceWasVisible = diceView_ != DiceView::Closed;
         checkTimeouts();
         /*
          * Aktuelle Sound-Einstellung an die Plattform durchreichen.
@@ -43,7 +45,7 @@ namespace sticky_lotus::app {
             input.buttons.leftPressed ||
             input.buttons.centerPressed ||
             input.buttons.rightPressed ||
-            input.cancelPressed;
+            input.cancelPressed || input.dicePressed || input.diceSelectorPressed;
 
         if (!hasInput) {
             return;
@@ -52,6 +54,22 @@ namespace sticky_lotus::app {
         lastInputTime_ =
             std::chrono::steady_clock::now();
 
+        if (input.diceSelectorPressed) { showDiceSelector(); return; }
+        if (input.dicePressed) { rollDice(); return; }
+        if (diceView_ != DiceView::Closed) {
+            if (diceView_ == DiceView::Selector && input.gesture.gesture == input::TouchGesture::Tap) {
+                const int values[]{2, 6, 20};
+                for (int i = 0; i < 3; ++i) {
+                    if (ui::AppRenderer::diceOptionArea(i).contains(input.gesture.endPosition)) {
+                        setDiceSides(values[i]); closeDice(); return;
+                    }
+                }
+            }
+            if (input.cancelPressed || input.buttons.centerPressed || diceView_ == DiceView::Result)
+                closeDice();
+            return; // Never pass a modal tap through to life or counter controls.
+        }
+        if (diceWasVisible) return;
         screenManager_.handleInput(
             input
         );
@@ -59,6 +77,11 @@ namespace sticky_lotus::app {
 
     void Application::checkTimeouts()
     {
+        if (diceView_ == DiceView::Result &&
+            std::chrono::steady_clock::now() - diceShownAt_ >= std::chrono::seconds(3))
+            closeDice();
+        if (diceView_ != DiceView::Closed) return;
+
         /*
          * Jeder Zweig unten ist nur relevant, während der jeweils
          * betroffene Screen tatsächlich sichtbar ist - ein
@@ -195,6 +218,7 @@ namespace sticky_lotus::app {
 
     void Application::rollStartingPlayer()
     {
+        diceView_ = DiceView::Closed;
         lastInputTime_ =
             std::chrono::steady_clock::now();
 
@@ -213,6 +237,7 @@ namespace sticky_lotus::app {
 
     void Application::resetGame()
     {
+        diceView_ = DiceView::Closed;
         screenManager_.cancelPingUndo();
         lastInputTime_ =
             std::chrono::steady_clock::now();
@@ -227,6 +252,37 @@ namespace sticky_lotus::app {
     void Application::draw()
     {
         screenManager_.draw();
+        if (diceView_ != DiceView::Closed)
+            renderer_.drawDice(diceView_ == DiceView::Selector, diceSides_, diceResult_);
+    }
+
+    void Application::setDiceSides(int sides)
+    {
+        if (sides == 2 || sides == 6 || sides == 20) diceSides_ = sides;
+    }
+
+    void Application::closeDice()
+    {
+        diceView_ = DiceView::Closed;
+        screenManager_.draw();
+    }
+
+    void Application::showDiceSelector()
+    {
+        screenManager_.cancelPingUndo();
+        lastInputTime_ = std::chrono::steady_clock::now();
+        diceView_ = DiceView::Selector;
+        draw();
+    }
+
+    void Application::rollDice()
+    {
+        static std::mt19937 rng{std::random_device{}()};
+        screenManager_.cancelPingUndo();
+        diceResult_ = std::uniform_int_distribution<int>(1, diceSides_)(rng);
+        diceShownAt_ = lastInputTime_ = std::chrono::steady_clock::now();
+        diceView_ = DiceView::Result;
+        draw();
     }
 
     void Application::setBatteryStatus(
@@ -241,6 +297,7 @@ namespace sticky_lotus::app {
     }
     void Application::showSleepScreen()
     {
+        diceView_ = DiceView::Closed;
         screenManager_.cancelPingUndo();
         renderer_.drawSleepScreen();
     }
