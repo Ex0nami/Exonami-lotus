@@ -4,7 +4,7 @@
 #include <cstddef>
 #include <string>
 
-#include "icons/lotus_menu_icon.h"
+#include "icons/planeswalker_menu_icon.h"
 #include "icons/poison.h"
 #include "icons/skull_icon.h"
 #include "icons/cooppunks_social.h"
@@ -1380,24 +1380,24 @@ namespace sticky_lotus::ui
         );
 
         /*
-         * Lotus-Icon mittig im Button platzieren.
+         * Planeswalker symbol centered inside the circular menu button.
          */
         const Rect iconArea = {
             center.x -
-            static_cast<float>(LOTUS_ICON_WIDTH) / 2.0F,
+            static_cast<float>(PLANESWALKER_ICON_WIDTH) / 2.0F,
 
             center.y -
-            static_cast<float>(LOTUS_ICON_HEIGHT) / 2.0F - 2.0F,
+            static_cast<float>(PLANESWALKER_ICON_HEIGHT) / 2.0F,
 
-            static_cast<float>(LOTUS_ICON_WIDTH),
-            static_cast<float>(LOTUS_ICON_HEIGHT)
+            static_cast<float>(PLANESWALKER_ICON_WIDTH),
+            static_cast<float>(PLANESWALKER_ICON_HEIGHT)
         };
 
         canvas_.drawMonochromeBitmap(
-            lotus_icon,
-            LOTUS_ICON_WIDTH,
-            LOTUS_ICON_HEIGHT,
-            LOTUS_ICON_BYTES_PER_ROW,
+            planeswalker_icon,
+            PLANESWALKER_ICON_WIDTH,
+            PLANESWALKER_ICON_HEIGHT,
+            PLANESWALKER_ICON_BYTES_PER_ROW,
             iconArea,
             0.0F
         );
@@ -2481,12 +2481,9 @@ namespace sticky_lotus::ui
             upsideDown
         );
 
-        /*
-         * Include the corner delta badges in the hardware refresh region.
-         */
-        canvas_.invalidate(
-            playerArea
-        );
+        // Counter and badge clearing can overlap the central menu. Restore
+        // the complete overlay after every regional life update.
+        redrawStatusOverlay(playerArea);
 
         canvas_.flush();
     }
@@ -3016,3 +3013,4 @@ namespace sticky_lotus::ui
         );
     }
 } // namespace sticky_lotus::ui
+
