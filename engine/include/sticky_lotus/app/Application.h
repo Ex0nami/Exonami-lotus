@@ -62,6 +62,9 @@ namespace sticky_lotus::app
         void resetGame();
         void rollDice();
         void showDiceSelector();
+        void showHistory();
+        HistorySnapshot createHistorySnapshot() const { return game_.history().snapshot(); }
+        bool restoreHistorySnapshot(const HistorySnapshot& saved) { return game_.history().restore(saved); }
         int diceSides() const { return diceSides_; }
         void setDiceSides(int sides);
 
@@ -81,7 +84,8 @@ namespace sticky_lotus::app
     private:
         int diceSides_ = 6;
         int diceResult_ = 1;
-        enum class DiceView { Closed, Selector, Result };
+        enum class DiceView { Closed, Selector, Result, History };
+        std::size_t historyPage_ = 0;
         DiceView diceView_ = DiceView::Closed;
         std::chrono::steady_clock::time_point diceShownAt_{};
         void closeDice();

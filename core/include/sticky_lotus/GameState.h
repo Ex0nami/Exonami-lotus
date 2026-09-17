@@ -2,6 +2,7 @@
 
 #include "sticky_lotus/EliminationReason.h"
 #include "sticky_lotus/GameSettings.h"
+#include "sticky_lotus/ActionHistory.h"
 
 #include <array>
 #include <chrono>
@@ -74,6 +75,8 @@ public:
         sticky_lotus::maximumPlayerCount;
 
     GameState();
+    ActionHistory& history() { return history_; }
+    const ActionHistory& history() const { return history_; }
 
     [[nodiscard]]
     const Player& getPlayer(
@@ -98,7 +101,7 @@ public:
 
     void changeLife(
         std::size_t playerIndex,
-        int amount
+        int amount, bool recordHistory = true
     );
 
     void setPlayerMode(
@@ -222,6 +225,7 @@ public:
 
 private:
     GameSettings settings_;
+    ActionHistory history_;
 
     std::array<
         Player,

@@ -270,6 +270,9 @@ namespace sticky_lotus_firmware
 
             if (result == ESP_OK)
                 result = nvs_set_i32(handle, "dice_sides", application.diceSides());
+            const auto history = application.createHistorySnapshot();
+            if (result == ESP_OK)
+                result = nvs_set_blob(handle, "history_v1", &history, sizeof(history));
             if (result == ESP_OK)
             {
                 result =
@@ -319,6 +322,9 @@ namespace sticky_lotus_firmware
                     &size
                 );
 
+            sticky_lotus::HistorySnapshot history{};
+            std::size_t historySize = sizeof(history);
+            const bool historyLoaded = nvs_get_blob(handle, "history_v1", &history, &historySize) == ESP_OK && historySize == sizeof(history);
             std::int32_t diceSides = 6;
             if (nvs_get_i32(handle, "dice_sides", &diceSides) == ESP_OK)
                 application.setDiceSides(diceSides);
@@ -346,6 +352,7 @@ namespace sticky_lotus_firmware
                 return ESP_ERR_INVALID_STATE;
             }
 
+            if (historyLoaded) application.restoreHistorySnapshot(history);
             return ESP_OK;
         }
 

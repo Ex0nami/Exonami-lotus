@@ -61,6 +61,9 @@ int main() {
     SetConfigFlags(FLAG_WINDOW_HIDDEN);
 #endif
     RecordedCanvas canvas;
+#ifndef STICKY_HEADLESS_TEST
+    SetTargetFPS(0); // Timing cases sleep explicitly; random trials need no frame delay.
+#endif
     TestInput input;
     app::Application app(canvas,input);
     auto frame=[&](const char* screenshot=nullptr) {
@@ -107,6 +110,78 @@ int main() {
     app.showDiceSelector(); input.next.cancelPressed=true; app.tick(); frame();
     require(!canvas.has("Choose a die or coin",28),"selector cancel");
     require(app.createGameSnapshot().poison==beforeDice.poison && app.createGameSnapshot().commanderDamage==beforeDice.commanderDamage,"dice altered counters");
+    // Core history: bounded storage, burst boundaries and safe restore.
+    ActionHistory log;
+    const auto start=ActionHistory::Clock::now();
+    log.add({HistoryKind::Life,0,0,40,39},true,start);
+    log.add({HistoryKind::Life,0,0,39,33},true,start+3999ms);
+    require(log.size()==1 && log.text(0)=="P1 Life: 40 -> 33 (-7)","life burst history");
+    log.add({HistoryKind::Life,0,0,33,35},true,start+4000ms);
+    require(log.size()==1 && log.entry(0).after==35,"burst timer must extend with last change");
+    log.add({HistoryKind::Life,0,0,35,34},true,start+8000ms);
+    require(log.size()==2,"exact four-second history boundary");
+    for(int n=1;n<=12;++n) log.add({HistoryKind::Dice,0,20,0,n});
+    require(log.size()==10 && log.entry(0).after==12 && log.entry(9).after==3,"latest ten, newest first");
+    ActionHistory restoredHistory;
+    require(restoredHistory.restore(log.snapshot()) && restoredHistory.text(9)=="D20: 3","history persistence roundtrip");
+    auto invalidHistory=log.snapshot(); invalidHistory.count=11;
+    require(!restoredHistory.restore(invalidHistory) && restoredHistory.size()==0,"reject oversized history");
+    invalidHistory=log.snapshot(); invalidHistory.entries[0].kind=static_cast<HistoryKind>(99);
+    require(!restoredHistory.restore(invalidHistory),"reject unknown history kind");
+    sticky_lotus::GameState historyGame;
+    historyGame.changePoison(0,-1); require(historyGame.history().size()==0,"ignore no-op counter changes");
+    historyGame.changeLife(0,-7); historyGame.changeLife(0,2);
+    require(historyGame.history().text(0)=="P1 Life: 40 -> 35 (-5)","GameState cumulative life history");
+    historyGame.changePoison(1,1);
+    commander::CommanderDamageDraft historyDraft;
+    historyDraft.begin(historyGame,1); historyDraft.changeDamage(0,3); historyDraft.cancel();
+    require(historyGame.history().size()==2,"cancelled Commander draft must not log");
+    historyDraft.begin(historyGame,1); historyDraft.changeDamage(0,3); historyDraft.commit(historyGame);
+    require(historyGame.history().size()==3 && historyGame.history().text(0)=="P1 -> P2 Commander: 0 -> 3","committed Commander action without duplicate life entry");
+    historyGame.reset(); require(historyGame.history().size()==0,"reset clears history");
+    historyGame.rollStartingPlayer(); require(historyGame.history().entry(0).kind==HistoryKind::FirstPlayer,"first-player history");
+    historyGame.setPlayerMode(PlayerMode::ThreePlayers); require(historyGame.history().size()==0,"player mode clears history");
+    // Actual app routing: centre hold must never alter a player's life.
+    app.resetGame(); frame();
+    app.showHistory(); frame("history-empty.png"); require(canvas.has("No actions yet",28),"empty history screen");
+    tap(400,430);
+    tap(400,240,TouchGesture::LongPress); // Legacy/short hold opens settings safely.
+    require(app.createGameSnapshot().life[3]==40 && canvas.has("Roll for first",24),"short centre hold must open settings, not change life");
+    tap(645,411);
+    tap(50,360); tap(50,360); tap(350,360);
+    require(app.createHistorySnapshot().count==1 && app.createHistorySnapshot().entries[0].after==39,"app life history grouping");
+    tap(200,100,TouchGesture::SwipeUp); // Ping from rotated P1.
+    require(app.createHistorySnapshot().count==2 && app.createHistorySnapshot().entries[0].kind==HistoryKind::Ping && app.createHistorySnapshot().entries[0].affected==14,"ping must be one entry with exact targets");
+    tap(200,100,TouchGesture::SwipeDown);
+    require(app.createHistorySnapshot().count==3 && app.createHistorySnapshot().entries[0].kind==HistoryKind::UndoPing,"undo ping must be one entry");
+    const auto savedLife=app.createGameSnapshot(); const auto savedHistory=app.createHistorySnapshot();
+    app.resetGame(); require(app.restoreGameSnapshot(savedLife) && app.restoreHistorySnapshot(savedHistory),"restore game and history together");
+    input.next.gesture={TouchGesture::LongPress,{400,240},{400,240},800}; app.tick(); frame();
+    require(canvas.has("History",36) && app.createGameSnapshot().life==savedLife.life,"800ms centre hold history routing");
+    tap(50,360); require(app.createGameSnapshot().life==savedLife.life,"history consumes underlying life taps");
+    tap(400,430);
+    require(app.restoreHistorySnapshot(log.snapshot()),"ten entry setup");
+    app.showHistory(); frame("history-page1.png");
+    require(canvas.has("D20: 12",24) && canvas.has("D20: 8",24) && !canvas.has("D20: 7",24),"first page newest five");
+    tap(650,430); frame("history-page2.png");
+    require(canvas.has("D20: 7",24) && canvas.has("D20: 3",24) && !canvas.has("D20: 8",24),"second page older five");
+    tap(150,430); require(canvas.has("D20: 12",24),"history previous button");
+    ActionHistory preview;
+    preview.add({HistoryKind::FirstPlayer,0});
+    preview.add({HistoryKind::Dice,0,2,0,2});
+    preview.add({HistoryKind::Life,0,0,40,33});
+    preview.add({HistoryKind::Poison,1,0,0,1});
+    preview.add({HistoryKind::Commander,1,2,0,4});
+    preview.add({HistoryKind::Ping,0,0,0,0,14});
+    preview.add({HistoryKind::UndoPing,0,0,0,0,14});
+    preview.add({HistoryKind::Dice,0,20,0,17});
+    preview.add({HistoryKind::Life,3,0,40,37});
+    preview.add({HistoryKind::Dice,0,6,0,4});
+    require(app.restoreHistorySnapshot(preview.snapshot()),"mixed history preview restore");
+    app.showHistory(); frame("history-preview-page1.png");
+    tap(650,430); frame("history-preview-page2.png");
+    tap(400,430); app.resetGame(); frame();
+    std::cout << "PASS: history bursts, bounded retention, ping/undo, committed counters, persistence, reset, centre hold and pagination.\n";
     for(int i=0;i<7;++i) tap(50,360);
     require(app.createGameSnapshot().life[2]==33,"seven taps: expected 33 life");
     require(canvas.has("-7",28,0),"missing cumulative -7");

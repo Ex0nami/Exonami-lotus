@@ -56,6 +56,17 @@ namespace sticky_lotus::app {
 
         if (input.diceSelectorPressed) { showDiceSelector(); return; }
         if (input.dicePressed) { rollDice(); return; }
+        if (diceView_ == DiceView::History) {
+            if (input.cancelPressed || input.buttons.centerPressed) { closeDice(); return; }
+            if (input.gesture.gesture == input::TouchGesture::Tap) {
+                const auto point = input.gesture.endPosition;
+                if (ui::AppRenderer::historyButtonArea(1).contains(point)) { closeDice(); return; }
+                if (historyPage_ > 0 && ui::AppRenderer::historyButtonArea(0).contains(point)) --historyPage_;
+                else if (historyPage_ == 0 && game_.history().size() > 5 && ui::AppRenderer::historyButtonArea(2).contains(point)) ++historyPage_;
+                draw();
+            }
+            return;
+        }
         if (diceView_ != DiceView::Closed) {
             if (diceView_ == DiceView::Selector && input.gesture.gesture == input::TouchGesture::Tap) {
                 const int values[]{2, 6, 20};
@@ -70,6 +81,13 @@ namespace sticky_lotus::app {
             return; // Never pass a modal tap through to life or counter controls.
         }
         if (diceWasVisible) return;
+        if (navigation_.currentScreen() == ScreenId::Game &&
+            input.gesture.gesture == input::TouchGesture::LongPress &&
+            input.gesture.heldMilliseconds >= 800 &&
+            renderer_.getMenuButtonRectangle().contains(input.gesture.startPosition) &&
+            renderer_.getMenuButtonRectangle().contains(input.gesture.endPosition)) {
+            showHistory(); return;
+        }
         screenManager_.handleInput(
             input
         );
@@ -251,9 +269,20 @@ namespace sticky_lotus::app {
 
     void Application::draw()
     {
+        if (diceView_ == DiceView::History) { renderer_.drawHistory(game_.history(), historyPage_); return; }
         screenManager_.draw();
         if (diceView_ != DiceView::Closed)
             renderer_.drawDice(diceView_ == DiceView::Selector, diceSides_, diceResult_);
+    }
+
+    void Application::showHistory()
+    {
+        screenManager_.cancelPingUndo();
+        game_.history().finishBurst();
+        lastInputTime_ = std::chrono::steady_clock::now();
+        historyPage_ = 0;
+        diceView_ = DiceView::History;
+        draw();
     }
 
     void Application::setDiceSides(int sides)
@@ -280,6 +309,7 @@ namespace sticky_lotus::app {
         static std::mt19937 rng{std::random_device{}()};
         screenManager_.cancelPingUndo();
         diceResult_ = std::uniform_int_distribution<int>(1, diceSides_)(rng);
+        game_.history().add({HistoryKind::Dice, 0, diceSides_, 0, diceResult_});
         diceShownAt_ = lastInputTime_ = std::chrono::steady_clock::now();
         diceView_ = DiceView::Result;
         draw();
@@ -310,6 +340,7 @@ namespace sticky_lotus::app {
         const GameSnapshot& snapshot
     )
     {
+        diceView_ = DiceView::Closed;
         screenManager_.cancelPingUndo();
         const bool restored =
             game_.restoreSnapshot(

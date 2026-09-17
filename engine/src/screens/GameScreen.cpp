@@ -186,13 +186,17 @@ namespace sticky_lotus::screens
             const int before = context_.game.getPlayer(player).life;
             const bool wasEliminated = context_.game.isPlayerEliminated(player);
             // Reuse life rules and the same cumulative four-second badge.
-            context_.game.changeLife(player, -1);
+            context_.game.changeLife(player, -1, false);
             changed[player] = before != context_.game.getPlayer(player).life;
             pingLoss_[player] = before - context_.game.getPlayer(player).life;
             pingUndoActive_ |= changed[player];
             eliminationChanged |= wasEliminated != context_.game.isPlayerEliminated(player);
         }
 
+        std::uint32_t affected = 0;
+        for (std::size_t p = 0; p < playerCount; ++p)
+            if (changed[p]) affected |= 1u << p;
+        if (affected) context_.game.history().add({HistoryKind::Ping, static_cast<int>(sourcePlayer), 0, 0, 0, affected});
         pingTime_ = std::chrono::steady_clock::now();
         if (eliminationChanged)
         {
@@ -219,13 +223,17 @@ namespace sticky_lotus::screens
 
         pingUndoActive_ = false;
         bool eliminationChanged = false;
+        std::uint32_t affected = 0;
         for (std::size_t player = 0; player < pingPlayerCount_; ++player)
         {
             if (pingLoss_[player] == 0) continue;
             const bool wasEliminated = context_.game.isPlayerEliminated(player);
-            context_.game.changeLife(player, pingLoss_[player]);
+            const int before = context_.game.getPlayer(player).life;
+            context_.game.changeLife(player, pingLoss_[player], false);
+            if (context_.game.getPlayer(player).life != before) affected |= 1u << player;
             eliminationChanged |= wasEliminated != context_.game.isPlayerEliminated(player);
         }
+        if (affected) context_.game.history().add({HistoryKind::UndoPing, static_cast<int>(pingSource_), 0, 0, 0, affected});
         if (eliminationChanged)
             context_.renderer.drawGameImmediately(context_.game);
         else
@@ -355,6 +363,10 @@ namespace sticky_lotus::screens
         const ui::Point position
     )
     {
+        if (context_.renderer.getMenuButtonRectangle().contains(position)) {
+            context_.navigation.showSettings();
+            return;
+        }
         const std::size_t playerIndex =
             getPlayerIndex(
                 position

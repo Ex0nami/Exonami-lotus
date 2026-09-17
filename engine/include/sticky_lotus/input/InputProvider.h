@@ -1,4 +1,5 @@
 #pragma once
+#include <cstdint>
 
 #include "sticky_lotus/ui/Geometry.h"
 
@@ -45,6 +46,7 @@ namespace sticky_lotus::input {
 
         ui::Point startPosition{};
         ui::Point endPosition{};
+        std::uint32_t heldMilliseconds = 0;
     };
 
     /**

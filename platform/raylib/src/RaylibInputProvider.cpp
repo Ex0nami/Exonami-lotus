@@ -109,7 +109,8 @@ GestureEvent RaylibInputProvider::updateGesture(
     return {
         .gesture = detectedGesture,
         .startPosition = gestureStart_,
-        .endPosition = pointer.position
+        .endPosition = pointer.position,
+        .heldMilliseconds = static_cast<std::uint32_t>((GetTime() - gestureStartTime_) * 1000)
     };
 }
 

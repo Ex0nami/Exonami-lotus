@@ -63,7 +63,7 @@ namespace sticky_lotus
 
     void GameState::changeLife(
         const std::size_t playerIndex,
-        const int amount
+        const int amount, const bool recordHistory
     )
     {
         if (playerIndex >= getPlayerCount())
@@ -124,6 +124,9 @@ namespace sticky_lotus
 
         const int appliedChange =
             players_[playerIndex].life - lifeBefore;
+
+        if (appliedChange != 0 && recordHistory)
+            history_.add({HistoryKind::Life, static_cast<int>(playerIndex), 0, lifeBefore, players_[playerIndex].life}, true);
 
         if (appliedChange != 0)
         {
@@ -217,6 +220,7 @@ namespace sticky_lotus
 
     void GameState::reset()
     {
+        history_.clear();
         const int startingLife =
             settings_.startingLife();
 
@@ -278,6 +282,8 @@ namespace sticky_lotus
 
         const int actualChange =
             damage - previousDamage;
+        if (actualChange != 0)
+            history_.add({HistoryKind::Commander, static_cast<int>(defenderIndex), static_cast<int>(attackerIndex), previousDamage, damage});
 
         players_[defenderIndex].life =
             std::max(
@@ -411,6 +417,7 @@ namespace sticky_lotus
 
         if (appliedChange != 0)
         {
+            history_.add({HistoryKind::Poison, static_cast<int>(playerIndex), 0, poisonBefore, players_[playerIndex].poison});
             poisonDelta_[playerIndex] +=
                 appliedChange;
 
@@ -452,6 +459,7 @@ namespace sticky_lotus
 
         hasStartingPlayerHighlight_ =
             true;
+        history_.add({HistoryKind::FirstPlayer, static_cast<int>(startingPlayerHighlight_)});
     }
 
     bool GameState::hasStartingPlayerHighlight() const
@@ -615,6 +623,7 @@ namespace sticky_lotus
             return false;
         }
 
+        history_.clear();
         settings_ =
             snapshot.settings;
 

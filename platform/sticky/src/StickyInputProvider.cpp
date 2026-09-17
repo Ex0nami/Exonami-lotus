@@ -233,6 +233,8 @@ void StickyInputProvider::handleTouchEvent(
                 TouchGesture::LongPress;
         }
 
+        completedFrame.gesture.heldMilliseconds = static_cast<std::uint32_t>(pressDurationUs / 1000);
+
         /*
          * Kurzes Klickfeedback nur für Tap/LongPress - Swipes
          * sind Navigationsgesten, kein "Button-Druck".

@@ -19,6 +19,28 @@ namespace sticky_lotus::ui
     {
     }
 
+    void AppRenderer::drawHistory(const ActionHistory& history, std::size_t page)
+    {
+        canvas_.clear(Ink::White);
+        canvas_.drawText("History", {45, 20, 710, 50}, 36, Ink::Black);
+        const std::size_t pages = history.size() > 5 ? 2 : 1;
+        canvas_.drawText("Newest first  -  " + std::to_string(page + 1) + "/" + std::to_string(pages),
+                         {45, 70, 710, 30}, 20, Ink::Black);
+        if (history.size() == 0)
+            canvas_.drawText("No actions yet", {45, 160, 710, 100}, 28, Ink::Black);
+        for (std::size_t row = 0; row < 5 && page * 5 + row < history.size(); ++row) {
+            const float y = 112.0F + row * 55.0F;
+            canvas_.drawText(history.text(page * 5 + row), {55, y, 690, 45}, 24,
+                             Ink::Black, TextAlignment::Left);
+            canvas_.drawLine({50, y + 49}, {750, y + 49}, 1, Ink::Black);
+        }
+        if (page > 0) drawSettingsButton(historyButtonArea(0), "Previous", false);
+        drawSettingsButton(historyButtonArea(1), "Back", true);
+        if (page + 1 < pages) drawSettingsButton(historyButtonArea(2), "Next", false);
+        canvas_.invalidate({0, 0, 800, 480});
+        canvas_.flush();
+    }
+
     void AppRenderer::drawDice(bool selector, int sides, int result)
     {
         const Rect panel{110, 115, 580, 250};

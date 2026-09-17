@@ -39,6 +39,8 @@ namespace sticky_lotus::ui
          */
         void drawSettings(const GameState& game);
         void drawDice(bool selector, int sides, int result);
+        void drawHistory(const ActionHistory& history, std::size_t page);
+        static Rect historyButtonArea(int index) { return {50.0F + index * 250.0F, 403.0F, 200.0F, 52.0F}; }
         static Rect diceOptionArea(int index) { return {150.0F + index * 170.0F, 210.0F, 160.0F, 70.0F}; }
 
         void drawCommanderDamage(
