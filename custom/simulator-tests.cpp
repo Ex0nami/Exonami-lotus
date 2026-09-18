@@ -81,6 +81,10 @@ int main() {
         input.next.gesture={gesture,{x,y},{x,y}}; app.tick(); app.checkTimeouts(); frame();
     };
     frame();
+    auto diceGame=app.createGameSnapshot();
+    diceGame.life={33,28,17,9}; diceGame.poison={1,2,3,4};
+    diceGame.commanderDamage[0][1]=5;
+    require(app.restoreGameSnapshot(diceGame),"non-default dice regression setup");
     const auto beforeDice=app.createGameSnapshot();
     require(app.diceSides()==6,"default die must be D6");
     app.setDiceSides(7); require(app.diceSides()==6,"invalid stored die must be ignored");
@@ -101,12 +105,14 @@ int main() {
             require(result>=1 && result<=sides,"dice result out of range"); seen[result-1]=true;
         }
         require(std::all_of(seen.begin(),seen.end(),[](bool v){return v;}),"dice outcome unreachable");
+        require(app.createGameSnapshot().life==beforeDice.life,"repeated rolls reset non-default life totals");
     }
     frame("dice-result.png");
     tap(50,360); // Dismiss only, never subtract life.
     require(app.createGameSnapshot().life==beforeDice.life,"dice modal changed life");
     app.rollDice(); std::this_thread::sleep_for(3100ms); app.checkTimeouts(); frame();
     require(!canvas.has("D20",28),"dice result did not expire");
+    require(app.createGameSnapshot().life==beforeDice.life,"result timeout reset life totals");
     app.showDiceSelector(); input.next.cancelPressed=true; app.tick(); frame();
     require(!canvas.has("Choose a die or coin",28),"selector cancel");
     require(app.createGameSnapshot().poison==beforeDice.poison && app.createGameSnapshot().commanderDamage==beforeDice.commanderDamage,"dice altered counters");

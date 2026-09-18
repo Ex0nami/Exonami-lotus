@@ -1,5 +1,4 @@
 #include "sticky_lotus/app/Application.h"
-#include <random>
 
 namespace sticky_lotus::app {
 
@@ -306,9 +305,8 @@ namespace sticky_lotus::app {
 
     void Application::rollDice()
     {
-        static std::mt19937 rng{std::random_device{}()};
         screenManager_.cancelPingUndo();
-        diceResult_ = std::uniform_int_distribution<int>(1, diceSides_)(rng);
+        diceResult_ = GameState::rollDie(diceSides_);
         game_.history().add({HistoryKind::Dice, 0, diceSides_, 0, diceResult_});
         diceShownAt_ = lastInputTime_ = std::chrono::steady_clock::now();
         diceView_ = DiceView::Result;

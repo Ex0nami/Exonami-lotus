@@ -153,6 +153,8 @@ public:
      * UI-Rückmeldung, kein dauerhafter Spielzustand.
      */
     void rollStartingPlayer();
+    // Reuse the process-wide generator; do not seed a generator on the UI stack.
+    static int rollDie(int sides);
 
     [[nodiscard]]
     bool hasStartingPlayerHighlight() const;

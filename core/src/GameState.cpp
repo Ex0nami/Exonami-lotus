@@ -447,6 +447,12 @@ namespace sticky_lotus
         return players_[playerIndex].poison;
     }
 
+    int GameState::rollDie(const int sides)
+    {
+        if (sides != 2 && sides != 6 && sides != 20) return 0;
+        return std::uniform_int_distribution<int>(1, sides)(rng);
+    }
+
     void GameState::rollStartingPlayer()
     {
         std::uniform_int_distribution<std::size_t> dist(
