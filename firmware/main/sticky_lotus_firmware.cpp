@@ -17,6 +17,7 @@
 #include "esp_log.h"
 #include "esp_sleep.h"
 #include "esp_timer.h"
+#include "esp_heap_caps.h"
 
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
@@ -799,6 +800,8 @@ namespace sticky_lotus_firmware
         bool upButtonHoldTriggered =
             false;
 
+        auto lastDiagnosticsUs = esp_timer_get_time();
+        std::int64_t maximumRefreshServiceUs = 0;
         while (true)
         {
             /*
@@ -1004,7 +1007,25 @@ namespace sticky_lotus_firmware
              * Vorgemerkten E-Paper-Refresh durchführen,
              * sobald die konfigurierte Ruhezeit abgelaufen ist.
              */
+            const auto refreshStartUs = esp_timer_get_time();
             canvas.serviceRefresh();
+            const auto diagnosticsNowUs = esp_timer_get_time();
+            const auto refreshElapsedUs = diagnosticsNowUs - refreshStartUs;
+            if (refreshElapsedUs > maximumRefreshServiceUs)
+                maximumRefreshServiceUs = refreshElapsedUs;
+            if (diagnosticsNowUs - lastDiagnosticsUs >= 60'000'000LL) {
+                constexpr auto caps = MALLOC_CAP_INTERNAL | MALLOC_CAP_8BIT;
+                const auto inputStats = inputProvider.diagnostics();
+                ESP_LOGI(logTag,
+                    "Performance: internal_free=%u internal_min=%u largest_block=%u queue_peak=%u dropped=%u max_refresh_service_us=%lld",
+                    static_cast<unsigned>(heap_caps_get_free_size(caps)),
+                    static_cast<unsigned>(heap_caps_get_minimum_free_size(caps)),
+                    static_cast<unsigned>(heap_caps_get_largest_free_block(caps)),
+                    static_cast<unsigned>(inputStats.peakQueued),
+                    static_cast<unsigned>(inputStats.dropped),
+                    static_cast<long long>(maximumRefreshServiceUs));
+                lastDiagnosticsUs = diagnosticsNowUs;
+            }
 
             vTaskDelay(
                 pdMS_TO_TICKS(10)

@@ -264,7 +264,10 @@ void StickyInputProvider::handleTouchEvent(
                 ) % maximumPendingFrames;
 
             ++pendingCount_;
+            if (pendingCount_ > diagnostics_.peakQueued)
+                diagnostics_.peakQueued = pendingCount_;
         } else {
+            ++diagnostics_.dropped;
             ESP_LOGW(
                 logTag,
                 "Touch input queue full; dropping gesture"
@@ -286,6 +289,12 @@ void StickyInputProvider::setSoundEnabled(
     buzzer_service::SetEnabled(
         enabled
     );
+}
+
+StickyInputProvider::Diagnostics StickyInputProvider::diagnostics() const
+{
+    std::lock_guard<std::mutex> lock(mutex_);
+    return diagnostics_;
 }
 
 bool StickyInputProvider::hasPendingInput() const

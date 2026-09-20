@@ -33,13 +33,13 @@ namespace sticky_lotus::screens {
         return gameScreen_;
     }
 
-    void ScreenManager::processScreenTransition()
+    bool ScreenManager::processScreenTransition()
     {
         const app::ScreenId currentScreenId =
             context_.navigation.currentScreen();
 
         if (currentScreenId == previousScreen_) {
-            return;
+            return false;
         }
 
         switch (previousScreen_) {
@@ -85,6 +85,7 @@ namespace sticky_lotus::screens {
          * den tatsächlichen E-Paper-Refresh.
          */
         context_.renderer.flush();
+        return true;
     }
 
     void ScreenManager::handleInput(
@@ -102,8 +103,7 @@ namespace sticky_lotus::screens {
 
     void ScreenManager::draw()
     {
-        processScreenTransition();
-        currentScreen().draw();
+        if (!processScreenTransition()) currentScreen().draw();
     }
 
 } // namespace sticky_lotus::screens

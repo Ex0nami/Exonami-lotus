@@ -2,7 +2,7 @@ from pathlib import Path
 from elftools.elf.elffile import ELFFile
 root=Path(__file__).resolve().parents[1]
 app=(root/'firmware/build/sticky_lotus_firmware.bin').read_bytes()
-for marker in (b'Refresh screen', b'Running scheduled full E-paper cleanup', b'retrying after one second'):
+for marker in (b'Performance: internal_free=', b'Refresh screen', b'Running scheduled full E-paper cleanup', b'retrying after one second'):
     assert marker in app, f'Refresh update missing: {marker!r}'
 with (root/'firmware/build/sticky_lotus_firmware.elf').open('rb') as f:
     elf=ELFFile(f)

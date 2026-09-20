@@ -8,6 +8,8 @@
 #include "HeadlessCanvas.h"
 #endif
 #include <algorithm>
+#include <random>
+#include "sticky_lotus/ui/MonoRaster.h"
 #include <iostream>
 #include <stdexcept>
 #include <thread>
@@ -31,10 +33,11 @@ struct RecordedCanvas : Canvas {
     std::vector<Label> labels;
     int invalidations=0;
     int fullRefreshes=0;
+    int clears=0;
     int highlightedPlayers=0;
     void beginFrame() override { real.beginFrame(); }
     void endFrame() override { real.endFrame(); }
-    void clear(Ink ink) override { real.clear(ink); }
+    void clear(Ink ink) override { ++clears; real.clear(ink); }
     void fillRect(const Rect& area, Ink ink) override {
         if (ink==Ink::LightGray && area.width==400 && area.height>=240) ++highlightedPlayers;
         real.fillRect(area,ink);
@@ -63,6 +66,51 @@ int main() {
     SetConfigFlags(FLAG_WINDOW_HIDDEN);
 #endif
     RecordedCanvas canvas;
+    {
+        sticky_lotus::GameState game;
+        app::NavigationState nav;
+        commander::CommanderDamageDraft draft;
+        AppRenderer renderer(canvas);
+        screens::ScreenManager manager({game,nav,draft,renderer});
+        canvas.beginFrame();
+        nav.showSettings();
+        int before = canvas.clears;
+        manager.draw();
+        require(canvas.clears == before+1,"transition must render settings exactly once");
+        before = canvas.clears;
+        manager.draw();
+        require(canvas.clears == before+1,"stable explicit draw still renders");
+        nav.showGame();
+        before = canvas.clears;
+        manager.draw();
+        require(canvas.clears == before+1,"return transition must render game exactly once");
+        canvas.endFrame();
+    }
+    {
+        std::mt19937 random(12345);
+        // Guard bytes and untouched bits must survive arbitrary clipped rectangles.
+        for (int trial=0; trial<20000; ++trial) {
+            constexpr int width=64, height=32, guard=16;
+            std::vector<std::uint8_t> actual(width*height/8+2*guard);
+            for (auto& byte: actual) byte=static_cast<std::uint8_t>(random());
+            auto expected=actual;
+            int left=static_cast<int>(random()%100)-18;
+            int right=static_cast<int>(random()%100)-18;
+            int top=static_cast<int>(random()%60)-14;
+            int bottom=static_cast<int>(random()%60)-14;
+            bool black=(trial%2)==0;
+            fillMonoRect(actual.data()+guard,width,height,left,top,right,bottom,black);
+            for(int y=std::max(0,top); y<std::min(height,bottom); ++y)
+                for(int x=std::max(0,left); x<std::min(width,right); ++x) {
+                    auto& byte=expected[guard+y*(width/8)+x/8];
+                    const auto mask=static_cast<std::uint8_t>(0x80u>>(x%8));
+                    if(black) byte &= static_cast<std::uint8_t>(~mask);
+                    else byte |= mask;
+                }
+            require(actual==expected,"packed fill must match pixels and preserve guard bytes");
+        }
+        std::cout << "PASS: 20000 packed rectangle equivalence cases and single-draw transitions\n";
+    }
     RefreshSchedule schedule;
     schedule.changed(0);
     require(!schedule.partialDue(34999) && schedule.partialDue(35000),"35ms update batching boundary");

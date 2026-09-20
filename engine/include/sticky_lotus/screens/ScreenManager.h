@@ -38,7 +38,7 @@ namespace sticky_lotus::screens {
         [[nodiscard]]
         Screen& currentScreen();
 
-        void processScreenTransition();
+        bool processScreenTransition();
     };
 
 } // namespace sticky_lotus::screens

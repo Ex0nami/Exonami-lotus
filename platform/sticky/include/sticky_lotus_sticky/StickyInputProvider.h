@@ -27,7 +27,14 @@ namespace sticky_lotus_sticky {
         [[nodiscard]]
         bool hasPendingInput() const;
 
+        struct Diagnostics {
+            std::size_t peakQueued = 0;
+            std::uint32_t dropped = 0;
+        };
+        Diagnostics diagnostics() const;
+
     private:
+        Diagnostics diagnostics_{};
         static constexpr float swipeThreshold = 45.0F;
 
         /*

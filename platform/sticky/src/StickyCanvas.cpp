@@ -1,4 +1,5 @@
 #include "sticky_lotus_sticky/StickyCanvas.h"
+#include "sticky_lotus/ui/MonoRaster.h"
 
 #include "epaper_panel.h"
 #include "epaper_ui/bitmap_font.h"
@@ -156,6 +157,12 @@ namespace sticky_lotus_sticky
         const int top = std::max(0, rounded(area.y));
         const int right = std::min(width_, rounded(area.x + area.width));
         const int bottom = std::min(height_, rounded(area.y + area.height));
+
+        if (width_ % 8 == 0 && (ink == Ink::Black || ink == Ink::White)) {
+            sticky_lotus::ui::fillMonoRect(panel_.framebuffer(), width_, height_, left, top, right, bottom, ink == Ink::Black);
+            dirty_ = true;
+            return;
+        }
 
         for (int y = top; y < bottom; ++y)
         {
