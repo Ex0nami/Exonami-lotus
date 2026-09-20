@@ -1,5 +1,6 @@
 #pragma once
 #include <array>
+#include <charconv>
 #include <chrono>
 #include <cstdint>
 #include <string>
@@ -54,24 +55,47 @@ public:
     }
     std::string text(std::size_t index) const {
         const auto& e=entry(index);
-        const std::string p="P"+std::to_string(e.player+1);
-        const auto delta=static_cast<long long>(e.after)-e.before;
-        const std::string change=(delta>0 ? "+" : "")+std::to_string(delta);
+        // One reserved result, no chains of allocating temporary strings.
+        std::string out;
+        out.reserve(96);
+        const auto number=[&](long long value) {
+            char buffer[24];
+            const auto converted=std::to_chars(buffer,buffer+sizeof(buffer),value);
+            out.append(buffer,converted.ptr);
+        };
+        const auto player=[&](int value) { out += "P"; number(value+1); };
+        const auto totals=[&]() { number(e.before); out += " -> "; number(e.after); };
         switch(e.kind) {
-        case HistoryKind::Life: return p+" Life: "+std::to_string(e.before)+" -> "+std::to_string(e.after)+" ("+change+")";
-        case HistoryKind::Poison: return p+" Poison: "+std::to_string(e.before)+" -> "+std::to_string(e.after);
-        case HistoryKind::Commander: return "P"+std::to_string(e.other+1)+" -> "+p+" Commander: "+std::to_string(e.before)+" -> "+std::to_string(e.after);
+        case HistoryKind::Life: {
+            player(e.player); out += " Life: "; totals(); out += " (";
+            const auto delta=static_cast<long long>(e.after)-e.before;
+            if(delta>0) out += "+";
+            number(delta); out += ")"; break;
+        }
+        case HistoryKind::Poison:
+            player(e.player); out += " Poison: "; totals(); break;
+        case HistoryKind::Commander:
+            player(e.other); out += " -> "; player(e.player); out += " Commander: "; totals(); break;
         case HistoryKind::Ping:
         case HistoryKind::UndoPing: {
-            std::string targets;
-            for(int i=0;i<4;++i) if(e.affected & (1u<<i)) targets+=(targets.empty() ? "" : ", ")+std::string("P")+std::to_string(i+1);
-            return p+(e.kind==HistoryKind::Ping ? " Ping: " : " Undo ping: ")+targets+(e.kind==HistoryKind::Ping ? " -1" : " +1");
+            player(e.player); out += e.kind==HistoryKind::Ping ? " Ping: " : " Undo ping: ";
+            bool first=true;
+            for(int i=0;i<4;++i) if(e.affected & (1u<<i)) {
+                if(!first) out += ", ";
+                player(i); first=false;
+            }
+            out += e.kind==HistoryKind::Ping ? " -1" : " +1"; break;
         }
-        case HistoryKind::Dice: return e.other==2 ? (e.after==1 ? "Coin: HEADS" : "Coin: TAILS") : "D"+std::to_string(e.other)+": "+std::to_string(e.after);
-        case HistoryKind::FirstPlayer: return p+" starts the game";
+        case HistoryKind::Dice:
+            if(e.other==2) out += e.after==1 ? "Coin: HEADS" : "Coin: TAILS";
+            else { out += "D"; number(e.other); out += ": "; number(e.after); }
+            break;
+        case HistoryKind::FirstPlayer:
+            player(e.player); out += " starts the game"; break;
         }
-        return {};
+        return out;
     }
+
 private:
     HistorySnapshot data_{};
     bool canMerge_=false;

@@ -38,6 +38,8 @@ namespace sticky_lotus::ui
          * Zeichnet die Settings-Ansicht.
          */
         void drawSettings(const GameState& game);
+        static Rect getRefreshScreenRectangle() { return {515, 182, 240, 44}; }
+        void refreshScreen() { canvas_.invalidate({0, 0, 800, 480}); canvas_.flushImmediately(); }
         void drawDice(bool selector, int sides, int result);
         void drawHistory(const ActionHistory& history, std::size_t page);
         static Rect historyButtonArea(int index) { return {50.0F + index * 250.0F, 403.0F, 200.0F, 52.0F}; }

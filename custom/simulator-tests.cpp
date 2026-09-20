@@ -1,5 +1,6 @@
 // Integration tests use the real Application, screens, renderer and Raylib canvas.
 #include "sticky_lotus/app/Application.h"
+#include "sticky_lotus/ui/RefreshSchedule.h"
 #ifndef STICKY_HEADLESS_TEST
 #include "sticky_lotus_raylib/RaylibCanvas.h"
 #include <rlgl.h>
@@ -29,6 +30,7 @@ struct RecordedCanvas : Canvas {
     struct Label { std::string text; Rect area; int size; float rotation; };
     std::vector<Label> labels;
     int invalidations=0;
+    int fullRefreshes=0;
     int highlightedPlayers=0;
     void beginFrame() override { real.beginFrame(); }
     void endFrame() override { real.endFrame(); }
@@ -44,7 +46,7 @@ struct RecordedCanvas : Canvas {
     void fillCircle(Point center, float radius, Ink ink) override { real.fillCircle(center,radius,ink); }
     void drawCircle(Point center, float radius, float thickness, Ink ink) override { real.drawCircle(center,radius,thickness,ink); }
     void flush() override { real.flush(); }
-    void flushImmediately() override { real.flushImmediately(); }
+    void flushImmediately() override { ++fullRefreshes; real.flushImmediately(); }
     void drawMonochromeBitmap(const std::uint8_t* bitmap, int w, int h, int stride, const Rect& area, float rotation) override { real.drawMonochromeBitmap(bitmap,w,h,stride,area,rotation); }
     void invalidate(const Rect& area) override { ++invalidations; real.invalidate(area); }
     void drawText(std::string_view text, const Rect& area, int size, Ink ink, TextAlignment align, float rotation) override {
@@ -61,6 +63,27 @@ int main() {
     SetConfigFlags(FLAG_WINDOW_HIDDEN);
 #endif
     RecordedCanvas canvas;
+    RefreshSchedule schedule;
+    schedule.changed(0);
+    require(!schedule.partialDue(34999) && schedule.partialDue(35000),"35ms update batching boundary");
+    for(int t=20000;t<=80000;t+=20000) schedule.changed(t);
+    require(!schedule.partialDue(99999) && schedule.partialDue(100000),"continuous input must not starve partial refresh");
+    schedule.partialComplete(100000,true);
+    require(!schedule.fullDue(3079999) && schedule.fullDue(3080000),"cleanup after three seconds idle");
+    for(int t=1000000;t<=20000000;t+=1000000) {
+        schedule.changed(t); schedule.partialComplete(t,true);
+        require(!schedule.fullDue(t),"cleanup deadline must not fire early");
+    }
+    schedule.changed(20100000);
+    require(schedule.fullDue(20100000),"continuous updates cannot postpone cleanup beyond deadline");
+    schedule.failed(20100000,true);
+    require(!schedule.canAttempt(21099999) && schedule.canAttempt(21100000) && schedule.fullDue(21100000),"failed cleanup needs bounded retry");
+    schedule.fullComplete();
+    require(!schedule.pending() && !schedule.fullDue(99999999),"manual/full refresh clears scheduled work");
+    schedule.changed(30000000); schedule.failed(30000000,false);
+    require(schedule.pending() && !schedule.canAttempt(30999999) && schedule.canAttempt(31000000),"partial failure keeps work without busy retry loop");
+    schedule.partialComplete(31000000,false);
+    require(!schedule.pending() && !schedule.fullDue(99999999),"successful base refresh does not schedule redundant cleanup");
 #ifndef STICKY_HEADLESS_TEST
     SetTargetFPS(0); // Timing cases sleep explicitly; random trials need no frame delay.
 #endif
@@ -188,6 +211,16 @@ int main() {
     tap(650,430); frame("history-preview-page2.png");
     tap(400,430); app.resetGame(); frame();
     std::cout << "PASS: history bursts, bounded retention, ping/undo, committed counters, persistence, reset, centre hold and pagination.\n";
+    tap(50,360);
+    const auto beforeRefresh=app.createGameSnapshot();
+    const auto historyBeforeRefresh=app.createHistorySnapshot();
+    tap(400,240); frame("settings-refresh-screen.png");
+    const int fullBefore=canvas.fullRefreshes;
+    tap(630,204);
+    require(canvas.fullRefreshes==fullBefore+1 && canvas.has("Refresh screen",24),"manual cleanup must request full refresh and remain in Settings");
+    require(app.createGameSnapshot().life==beforeRefresh.life && app.createGameSnapshot().poison==beforeRefresh.poison && app.createGameSnapshot().commanderDamage==beforeRefresh.commanderDamage && app.createHistorySnapshot().count==historyBeforeRefresh.count,"screen cleanup changed game or history");
+    tap(645,411); app.resetGame(); frame();
+    std::cout << "PASS: manual refresh preserves game/history; batching, cleanup deadlines and failure retry policy.\n";
     for(int i=0;i<7;++i) tap(50,360);
     require(app.createGameSnapshot().life[2]==33,"seven taps: expected 33 life");
     require(canvas.has("-7",28,0),"missing cumulative -7");

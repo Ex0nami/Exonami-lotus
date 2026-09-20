@@ -56,6 +56,11 @@ namespace sticky_lotus::screens
         const ui::AppRenderer& renderer =
             context_.renderer;
 
+        if (renderer.getRefreshScreenRectangle().contains(position)) {
+            context_.renderer.refreshScreen();
+            return;
+        }
+
         if (
             renderer
             .getCloseButtonRectangle()

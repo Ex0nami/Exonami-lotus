@@ -1865,22 +1865,7 @@ namespace sticky_lotus::ui
         constexpr float brandingX = 515.0F;
         constexpr float brandingWidth = 240.0F;
 
-        /*
-         * URL
-         */
-        canvas_.drawText(
-            "",
-            {
-                brandingX,
-                185.0F,
-                brandingWidth,
-                30.0F
-            },
-            18,
-            Ink::Black,
-            TextAlignment::Center,
-            0.0F
-        );
+        drawSettingsButton(getRefreshScreenRectangle(), "Refresh screen", false);
 
         /*
          * Cooppunks Logo

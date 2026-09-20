@@ -17,7 +17,7 @@ constexpr const char* kTag = "Ssd1677";
  *
  * Muss am echten Panel beobachtet und ggf. weiter angepasst werden.
  */
-constexpr int kMaxPartialRefreshesBeforeFull = 40;
+constexpr int kMaxPartialRefreshesBeforeFull = 30;
 constexpr uint8_t kDisplayUpdateCtrl1Differential[] = {0x00, 0x00};
 constexpr uint8_t kDisplayUpdateCtrl1Full[] = {0x40, 0x00};
 constexpr uint8_t kDisplayUpdateCtrl2Full = 0xF7;

@@ -1,4 +1,5 @@
 #pragma once
+#include "sticky_lotus/ui/RefreshSchedule.h"
 
 #include "sticky_lotus/ui/Canvas.h"
 
@@ -131,28 +132,6 @@ namespace sticky_lotus_sticky
         int height_;
         bool dirty_ = false;
 
-        bool refreshPending_ = false;
-
-        std::int64_t lastFrameChangeTimeUs_ = 0;
-        /** Zeit die gewartet wird bis die Eingabe ausgeführt wird.
-         * **/
-        static constexpr std::int64_t refreshDelayUs = 0;
-
-        /*
-         * Ein wegen des Ghosting-Schutz-Budgets fälliger Full-Refresh
-         * wird nicht sofort ausgeführt, sondern erst nach einer
-         * Eingabepause - siehe serviceRefresh().
-         */
-        bool fullRefreshDeferred_ = false;
-
-        /**
-         * Wartezeit ohne neue Eingabe, bevor ein fälliger
-         * Full-Refresh tatsächlich ausgelöst wird.
-         *
-         * Jede neue Eingabe setzt lastFrameChangeTimeUs_ zurück und
-         * verschiebt den fälligen Full-Refresh damit erneut.
-         */
-        static constexpr std::int64_t fullRefreshIdleDelayUs =
-            10'000'000;
+        sticky_lotus::ui::RefreshSchedule refreshSchedule_;
     };
 } // namespace sticky_lotus_sticky
