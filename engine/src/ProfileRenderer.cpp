@@ -3,15 +3,24 @@
 #include <charconv>
 #include <cstring>
 namespace sticky_lotus::ui {
+// Keep each dialog in its own frame. ESP32 GCC otherwise reserves temporary
+// argument storage for all four layouts in one large UI stack frame.
 void AppRenderer::drawProfiles(const GameState& game,const ProfileView& v) {
     using Mode=ProfileView::Mode;
     canvas_.clear(Ink::White);
+    switch(v.mode) {
+    case Mode::Winner: drawProfileWinner(game,v); break;
+    case Mode::Undo: drawProfileUndo(game,v); break;
+    case Mode::Keyboard: drawProfileKeyboard(game,v); break;
+    default: drawProfileList(game,v); break;
+    }
+    canvas_.invalidate({0,0,800,480}); canvas_.flush();
+}
+[[gnu::noinline]] void AppRenderer::drawProfileWinner(const GameState& game,const ProfileView&) {
     auto text=[&](std::string_view s,Rect a,int size=24) {canvas_.drawText(s,a,size,Ink::Black,TextAlignment::Center,0);};
-    // Reuse one bounded label buffer. Implicit std::string temporaries at every
-    // button previously inflated the ESP32 frame to 1760 bytes.
-    char label[64]{};
     auto button=[&](Rect a,const char* s,bool selected=false) {drawSettingsButton(a,s,selected);};
-    if(v.mode==Mode::Winner) {
+    char label[64]{};
+
         text("Who won this game?",{30,20,740,48},30);
         for(std::size_t i=0;i<game.getPlayerCount();++i) {
             const auto id=game.profiles.seat(i);
@@ -23,7 +32,12 @@ void AppRenderer::drawProfiles(const GameState& game,const ProfileView& v) {
         }
         text("Select a winner to record the result and reset.",{30,300,740,35},20);
         button(profileFooter(0),"No winner / reset"); button(profileFooter(2),"Cancel");
-    } else if(v.mode==Mode::Undo) {
+
+}
+[[gnu::noinline]] void AppRenderer::drawProfileUndo(const GameState& game,const ProfileView&) {
+    auto text=[&](std::string_view s,Rect a,int size=24) {canvas_.drawText(s,a,size,Ink::Black,TextAlignment::Center,0);};
+    auto button=[&](Rect a,const char* s,bool selected=false) {drawSettingsButton(a,s,selected);};
+
         text("Undo last recorded win?",{30,40,740,50},30);
         if(game.profiles.canUndo()) {
             const auto& winner=game.profiles.at(game.profiles.snapshot().lastWinner);
@@ -32,7 +46,13 @@ void AppRenderer::drawProfiles(const GameState& game,const ProfileView& v) {
             button(profileFooter(0),"Undo win");
         }
         button(profileFooter(2),"Cancel");
-    } else if(v.mode==Mode::Keyboard) {
+
+}
+[[gnu::noinline]] void AppRenderer::drawProfileKeyboard(const GameState&,const ProfileView& v) {
+    auto text=[&](std::string_view s,Rect a,int size=24) {canvas_.drawText(s,a,size,Ink::Black,TextAlignment::Center,0);};
+    auto button=[&](Rect a,const char* s,bool selected=false) {drawSettingsButton(a,s,selected);};
+    char label[64]{};
+
         text(v.editing<0 ? "New player" : "Rename player",{30,10,740,40},28);
         text(v.text.empty()?"Enter name (max 16)":v.text.c_str(),{40,60,720,50},30);
         text(v.error,{30,112,740,24},18);
@@ -43,7 +63,14 @@ void AppRenderer::drawProfiles(const GameState& game,const ProfileView& v) {
         }
         button(profileNav(0),v.upper?"abc":"ABC"); button(profileNav(1),"Space"); button(profileNav(2),"Delete");
         button(profileFooter(0),"Save",true); button(profileFooter(2),"Cancel");
-    } else {
+
+}
+[[gnu::noinline]] void AppRenderer::drawProfileList(const GameState& game,const ProfileView& v) {
+    auto text=[&](std::string_view s,Rect a,int size=24) {canvas_.drawText(s,a,size,Ink::Black,TextAlignment::Center,0);};
+    auto button=[&](Rect a,const char* s,bool selected=false) {drawSettingsButton(a,s,selected);};
+    char label[64]{};
+    using Mode=ProfileView::Mode;
+
         const bool select=v.mode==Mode::Select;
         text(select?"Select player":"Players & scores",{30,10,740,42},30);
         text(v.error.empty()?(select?"Choose a name for this seat":"Tap a name to rename"):v.error.c_str(),{30,52,740,28},18);
@@ -69,7 +96,6 @@ void AppRenderer::drawProfiles(const GameState& game,const ProfileView& v) {
         if(select) button(profileFooter(1),"Guest");
         else if(game.profiles.canUndo()) button(profileFooter(1),"Undo last win");
         button(profileFooter(2),"Back");
-    }
-    canvas_.invalidate({0,0,800,480}); canvas_.flush();
+
 }
 }

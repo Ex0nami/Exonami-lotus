@@ -208,6 +208,11 @@ namespace sticky_lotus::ui
         void flush();
 
     private:
+        void drawProfileWinner(const GameState& game, const ProfileView& view);
+        void drawProfileUndo(const GameState& game, const ProfileView& view);
+        void drawProfileKeyboard(const GameState& game, const ProfileView& view);
+        void drawProfileList(const GameState& game, const ProfileView& view);
+
         Canvas& canvas_;
         TableLayout tableLayout_;
 

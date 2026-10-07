@@ -10,7 +10,7 @@ with (root/'firmware/build/sticky_lotus_firmware.elf').open('rb') as f:
     elf=ELFFile(f)
     symbols=list(elf.get_section_by_name('.symtab').iter_symbols())
     frames=elf.get_dwarf_info().CFI_entries()
-    for name in ['18handleProfileInput','12drawProfiles','saveGameState']:
+    for name in ['18handleProfileInput','12drawProfiles','drawProfileWinner','drawProfileUndo','drawProfileKeyboard','drawProfileList','saveGameState']:
         addresses={s['st_value'] for s in symbols if name in s.name and s['st_info']['type']=='STT_FUNC'}
         sizes=[row['cfa'].offset for entry in frames if entry.header.get('initial_location') in addresses
                for row in entry.get_decoded().table if row['cfa'].offset is not None]

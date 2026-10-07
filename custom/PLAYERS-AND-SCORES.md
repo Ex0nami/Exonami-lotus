@@ -30,3 +30,5 @@ Firmware compilation is blocked in the agent environment by the ESP toolchain la
 
 ## First hardware build check
 The first v1.3 build was rejected before flashing: drawProfiles used a 1760-byte frame (limit 768). Other measured frames included handleProfileInput 288 bytes and saveGameState 432 bytes. The renderer now avoids implicit temporary strings and reuses one 64-byte label buffer. A new firmware build must pass the same unchanged stack limit before installation.
+
+The second hardware build measured 1136 bytes for the combined renderer and was also rejected before flashing. Each dialog now has a separate non-inlined drawing function, preventing the compiler from reserving argument temporaries for all layouts together. The unchanged 768-byte frame limit now checks every dialog helper as well as the dispatcher.
