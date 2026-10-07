@@ -3,6 +3,7 @@
 #include "sticky_lotus/EliminationReason.h"
 #include "sticky_lotus/GameSettings.h"
 #include "sticky_lotus/ActionHistory.h"
+#include "sticky_lotus/PlayerProfiles.h"
 
 #include <array>
 #include <chrono>
@@ -75,6 +76,8 @@ public:
         sticky_lotus::maximumPlayerCount;
 
     GameState();
+    PlayerProfiles profiles;
+
     ActionHistory& history() { return history_; }
     const ActionHistory& history() const { return history_; }
 

@@ -240,52 +240,28 @@ namespace sticky_lotus_firmware
         /**
          * Spielstand in NVS speichern.
          */
-        esp_err_t saveGameState(
-            const sticky_lotus::app::Application& application
-        )
+        // One NVS blob keeps the awarded win and new game together across power loss.
+        // Static storage avoids adding a large snapshot to the small UI task stack.
+        struct SavedSession {
+            std::uint32_t magic = 0x53455331;
+            sticky_lotus::ProfileSnapshot profiles;
+            sticky_lotus::GameSnapshot game;
+            sticky_lotus::HistorySnapshot history;
+            std::int32_t diceSides = 6;
+        };
+        esp_err_t saveGameState(const sticky_lotus::app::Application& application)
         {
+            static SavedSession saved;
+            saved.profiles = application.profileSnapshot();
+            saved.game = application.createGameSnapshot();
+            saved.history = application.createHistorySnapshot();
+            saved.diceSides = application.diceSides();
             nvs_handle_t handle{};
-
-            esp_err_t result =
-                nvs_open(
-                    gameStateNamespace,
-                    NVS_READWRITE,
-                    &handle
-                );
-
-            if (result != ESP_OK)
-            {
-                return result;
-            }
-
-            const sticky_lotus::GameSnapshot snapshot =
-                application.createGameSnapshot();
-
-            result =
-                nvs_set_blob(
-                    handle,
-                    gameStateKey,
-                    &snapshot,
-                    sizeof(snapshot)
-                );
-
-            if (result == ESP_OK)
-                result = nvs_set_i32(handle, "dice_sides", application.diceSides());
-            const auto history = application.createHistorySnapshot();
-            if (result == ESP_OK)
-                result = nvs_set_blob(handle, "history_v1", &history, sizeof(history));
-            if (result == ESP_OK)
-            {
-                result =
-                    nvs_commit(
-                        handle
-                    );
-            }
-
-            nvs_close(
-                handle
-            );
-
+            esp_err_t result=nvs_open(gameStateNamespace,NVS_READWRITE,&handle);
+            if(result!=ESP_OK) return result;
+            result=nvs_set_blob(handle,"session_v1",&saved,sizeof(saved));
+            if(result==ESP_OK) result=nvs_commit(handle);
+            nvs_close(handle);
             return result;
         }
 
@@ -310,6 +286,19 @@ namespace sticky_lotus_firmware
                 return result;
             }
 
+            static SavedSession saved;
+            std::size_t savedSize=sizeof(saved);
+            const auto sessionResult=nvs_get_blob(handle,"session_v1",&saved,&savedSize);
+            if(sessionResult!=ESP_ERR_NVS_NOT_FOUND) {
+                nvs_close(handle);
+                if(sessionResult!=ESP_OK) return sessionResult;
+                if(savedSize!=sizeof(saved) || saved.magic!=0x53455331) return ESP_ERR_INVALID_SIZE;
+                if(!application.restoreProfiles(saved.profiles) || !application.restoreGameSnapshot(saved.game)) return ESP_ERR_INVALID_STATE;
+                application.restoreHistorySnapshot(saved.history);
+                application.setDiceSides(saved.diceSides);
+                return ESP_OK;
+            }
+            // Migration: existing Sticky saves did not include player profiles.
             sticky_lotus::GameSnapshot snapshot{};
 
             std::size_t size =
@@ -801,6 +790,7 @@ namespace sticky_lotus_firmware
             false;
 
         auto lastDiagnosticsUs = esp_timer_get_time();
+        std::int64_t nextProfileSaveUs = 0;
         std::int64_t maximumRefreshServiceUs = 0;
         while (true)
         {
@@ -1007,6 +997,16 @@ namespace sticky_lotus_firmware
              * Vorgemerkten E-Paper-Refresh durchführen,
              * sobald die konfigurierte Ruhezeit abgelaufen ist.
              */
+            if(application.profilesDirty() && esp_timer_get_time()>=nextProfileSaveUs) {
+                const auto saveResult=saveGameState(application);
+                if(saveResult==ESP_OK) {
+                    application.profilesSaved();
+                    ESP_LOGI(logTag,"Player profiles and game saved");
+                } else {
+                    ESP_LOGE(logTag,"Player save failed: %s; retrying",esp_err_to_name(saveResult));
+                    nextProfileSaveUs=esp_timer_get_time()+5'000'000LL;
+                }
+            }
             const auto refreshStartUs = esp_timer_get_time();
             canvas.serviceRefresh();
             const auto diagnosticsNowUs = esp_timer_get_time();

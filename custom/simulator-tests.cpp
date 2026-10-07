@@ -60,6 +60,7 @@ struct RecordedCanvas : Canvas {
         return std::any_of(labels.begin(),labels.end(),[&](const Label& l){return l.text==text && l.size==size && (rotation<0 || rotation==l.rotation);});
     }
 };
+#include "profile-tests.h"
 int main() {
  try {
 #ifndef STICKY_HEADLESS_TEST
@@ -135,6 +136,7 @@ int main() {
 #ifndef STICKY_HEADLESS_TEST
     SetTargetFPS(0); // Timing cases sleep explicitly; random trials need no frame delay.
 #endif
+    runProfileTests(canvas);
     TestInput input;
     app::Application app(canvas,input);
     auto frame=[&](const char* screenshot=nullptr) {

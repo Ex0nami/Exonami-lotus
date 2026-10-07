@@ -6,6 +6,7 @@
 #include <cstddef>
 #include "sticky_lotus/commander/CommanderDamageDraft.h"
 #include "sticky_lotus/ui/TableLayout.h"
+#include "sticky_lotus/ui/ProfileView.h"
 
 class GameState;
 
@@ -41,6 +42,17 @@ namespace sticky_lotus::ui
         static Rect getRefreshScreenRectangle() { return {515, 182, 240, 44}; }
         void refreshScreen() { canvas_.invalidate({0, 0, 800, 480}); canvas_.flushImmediately(); }
         void drawDice(bool selector, int sides, int result);
+        void drawProfiles(const GameState& game, const ProfileView& view);
+        static Rect profilesButtonArea() { return {515,240,240,44}; }
+        static Rect profileRow(int row) { return {60,85.0F+row*49,680,43}; }
+        static Rect profileFooter(int col) { return {40.0F+col*245,405,230,48}; }
+        static Rect profileNav(int col) { return {40.0F+col*245,342,230,45}; }
+        static Rect keyboardKey(int row,int col) { return {40.0F+col*72,140.0F+row*48,68,44}; }
+        static Rect playerNameArea(std::size_t seat,std::size_t count) {
+            TableLayout layout; const auto area=layout.counterArea(seat,count);
+            return {area.x,area.y+area.height/2+(layout.isUpsideDown(seat,count)?48.0F:-90.0F),area.width,42};
+        }
+
         void drawHistory(const ActionHistory& history, std::size_t page);
         static Rect historyButtonArea(int index) { return {50.0F + index * 250.0F, 403.0F, 200.0F, 52.0F}; }
         static Rect diceOptionArea(int index) { return {150.0F + index * 170.0F, 210.0F, 160.0F, 70.0F}; }

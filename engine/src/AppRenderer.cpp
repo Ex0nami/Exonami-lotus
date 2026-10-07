@@ -7,7 +7,6 @@
 #include "icons/planeswalker_menu_icon.h"
 #include "icons/poison.h"
 #include "icons/skull_icon.h"
-#include "icons/cooppunks_social.h"
 #include "sleep/exonami_sleep.h"
 
 namespace sticky_lotus::ui
@@ -1219,6 +1218,10 @@ namespace sticky_lotus::ui
             Ink::Black
         );
 
+        const auto name = game.profiles.seatName(playerIndex);
+        canvas_.drawText(name, playerNameArea(playerIndex,playerCount),
+            name.size()>12 ? 18 : 22, Ink::Black, TextAlignment::Center, rotation);
+
         if (!eliminated)
         {
             canvas_.drawText(
@@ -1862,6 +1865,7 @@ namespace sticky_lotus::ui
         /*
          * Branding / About rechts
          */
+        drawSettingsButton(profilesButtonArea(), "Players & scores", false);
         constexpr float brandingX = 515.0F;
         constexpr float brandingWidth = 240.0F;
 
@@ -1869,13 +1873,13 @@ namespace sticky_lotus::ui
 
         canvas_.drawText(
             "by Exonami",
-            {brandingX, 235.0F, brandingWidth, 48.0F},
+            {brandingX, 289.0F, brandingWidth, 30.0F},
             18, Ink::Black, TextAlignment::Center, 0.0F
         );
 
         canvas_.drawText(
             "v1.3",
-            {brandingX, 295.0F, brandingWidth, 24.0F},
+            {brandingX, 325.0F, brandingWidth, 24.0F},
             16, Ink::DarkGray, TextAlignment::Center, 0.0F
         );
 
@@ -2417,6 +2421,10 @@ namespace sticky_lotus::ui
             TextAlignment::Center,
             rotation
         );
+
+        const auto name = game.profiles.seatName(playerIndex);
+        canvas_.drawText(name, playerNameArea(playerIndex,playerCount),
+            name.size()>12 ? 18 : 22, Ink::Black, TextAlignment::Center, rotation);
 
         drawLifeDeltaBadge(
             game,

@@ -68,6 +68,10 @@ namespace sticky_lotus::app
         int diceSides() const { return diceSides_; }
         void setDiceSides(int sides);
 
+        const ProfileSnapshot& profileSnapshot() const { return game_.profiles.snapshot(); }
+        bool restoreProfiles(const ProfileSnapshot& saved) { return game_.profiles.restore(saved); }
+        bool profilesDirty() const { return game_.profiles.dirty(); }
+        void profilesSaved() { game_.profiles.saved(); }
         void draw();
 
         void setBatteryStatus(
@@ -82,6 +86,10 @@ namespace sticky_lotus::app
             const GameSnapshot& snapshot
         );
     private:
+        ui::ProfileView profileView_;
+        ui::ProfileView::Mode keyboardReturn_ = ui::ProfileView::Mode::Scores;
+        void handleProfileInput(const input::InputFrame& input);
+        void openProfiles(ui::ProfileView::Mode mode);
         int diceSides_ = 6;
         int diceResult_ = 1;
         enum class DiceView { Closed, Selector, Result, History };
