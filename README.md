@@ -11,7 +11,7 @@ Custom version **1.3**, based on [Sticky Lotus by inkOne](https://github.com/ink
 - Middle hardware button rolls a die or flips a coin; hold to choose D6, D20 or coin. Bottom button selects the first player.
 - Tap the centre icon for Settings; long-press for the last ten actions.
 - Tap a name above life to select a saved player. Settings includes player names, win scores and a winner prompt on Reset.
-- Exonami sleep artwork, a Planeswalker menu icon, manual/automatic full refreshes and rendering improvements.
+- New sleep artwork, a Planeswalker menu icon, manual/automatic full refreshes and rendering improvements.
 
 See [current build and test instructions](custom/BUILDING.md) and [player names and scores](custom/PLAYERS-AND-SCORES.md).
 
