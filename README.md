@@ -1,4 +1,29 @@
-# Sticky Lotus
+# Sticky Lotus — Exonami edition
+
+Custom version **1.3**, based on [Sticky Lotus by inkOne](https://github.com/inkOne/sticky-lotus). The original Git history and MIT license are retained.
+
+## Custom features
+
+- Two, three or four players; three-player layout has one player across the top and two below.
+- Signed cumulative life changes that disappear after four seconds without another change.
+- Swipe down to ping opponents for one life; swipe up within four seconds to undo the latest ping. After that, swipe up opens poison.
+- Commander damage and poison functions retained, with labels and arrows removed from the main screen.
+- Middle hardware button rolls a die or flips a coin; hold to choose D6, D20 or coin. Bottom button selects the first player.
+- Tap the centre icon for Settings; long-press for the last ten actions.
+- Tap a name above life to select a saved player. Settings includes player names, win scores and a winner prompt on Reset.
+- Exonami sleep artwork, a Planeswalker menu icon, manual/automatic full refreshes and rendering improvements.
+
+See [current build and test instructions](custom/BUILDING.md) and [player names and scores](custom/PLAYERS-AND-SCORES.md).
+
+**Installation:** the binary under `firmware/release/` and the Seeed playground entry described below are old upstream software, not this custom edition. Build this fork from source unless a matching custom release is available.
+
+This is an unofficial fan project. Magic: The Gathering names and symbols belong to their respective owners.
+
+---
+
+## Original upstream documentation
+
+The following describes the original project; use the custom instructions above for this edition.
 
 > A Magic: The Gathering life counter built for the Seeed Studio reTerminalSticky.
 

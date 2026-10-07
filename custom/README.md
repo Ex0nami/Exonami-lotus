@@ -1,5 +1,7 @@
 # Sticky Lotus custom: four-second life changes
 
+These are historical notes for the initial September 2026 build. For the current edition, use [BUILDING.md](BUILDING.md) and the [project overview](../README.md). Package filenames, sizes and validation status below describe that initial build.
+
 ## What this version does
 
 Based on https://github.com/inkOne/sticky-lotus at upstream main commit

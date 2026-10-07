@@ -12,3 +12,14 @@ firmware/sdkconfig.old
 
 # macOS
 .DS_Store
+
+# Local tools, diagnostics and device data
+__pycache__/
+*.pyc
+*.log
+.env
+.env.*
+!.env.example
+/backups/
+/device-backups/
+/install-*/
