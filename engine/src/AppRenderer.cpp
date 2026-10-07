@@ -1867,80 +1867,17 @@ namespace sticky_lotus::ui
 
         drawSettingsButton(getRefreshScreenRectangle(), "Refresh screen", false);
 
-        /*
-         * Cooppunks Logo
-         */
-        constexpr float logoWidth =
-            static_cast<float>(
-                COOPPUNKS_SOCIAL_WIDTH
-            );
-
-        constexpr float logoHeight =
-            static_cast<float>(
-                COOPPUNKS_SOCIAL_HEIGHT
-            );
-
-        const Rect cooppunksLogoArea = {
-            brandingX + 20.0F,
-            235.0F,
-            logoWidth,
-            logoHeight
-        };
-
-        canvas_.drawMonochromeBitmap(
-            cooppunks_social,
-            COOPPUNKS_SOCIAL_WIDTH,
-            COOPPUNKS_SOCIAL_HEIGHT,
-            COOPPUNKS_SOCIAL_BYTES_PER_ROW,
-            cooppunksLogoArea,
-            0.0F
-        );
-
-        /*
-         * by ink 2026
-         */
         canvas_.drawText(
             "by Exonami",
-            {
-                cooppunksLogoArea.x +
-                cooppunksLogoArea.width +
-                12.0F,
-
-                cooppunksLogoArea.y,
-
-                brandingWidth -
-                cooppunksLogoArea.width -
-                32.0F,
-
-                cooppunksLogoArea.height
-            },
-            18,
-            Ink::Black,
-            TextAlignment::Left,
-            0.0F
+            {brandingX, 235.0F, brandingWidth, 48.0F},
+            18, Ink::Black, TextAlignment::Center, 0.0F
         );
 
-        /*
-         * Version
-         */
         canvas_.drawText(
-            "v1.2",
-            {
-                brandingX,
-                cooppunksLogoArea.y +
-                cooppunksLogoArea.height +
-                12.0F,
-
-                brandingWidth,
-                24.0F
-            },
-            16,
-            Ink::DarkGray,
-            TextAlignment::Center,
-            0.0F
+            "v1.3",
+            {brandingX, 295.0F, brandingWidth, 24.0F},
+            16, Ink::DarkGray, TextAlignment::Center, 0.0F
         );
-
-
 
         canvas_.invalidate({
             0.0F,
