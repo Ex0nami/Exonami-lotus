@@ -1,4 +1,5 @@
 #include "sticky_lotus_firmware.h"
+#include "sticky_board.h"
 
 #include "esp_err.h"
 #include "esp_log.h"
@@ -45,6 +46,11 @@ namespace {
 
 extern "C" void app_main()
 {
+    // Latch battery power on before storage or display initialization.
+    // USB can power the board even when this external latch is not set.
+    // Run on every boot, including wake from deep sleep.
+    ESP_ERROR_CHECK(sticky_board::EnablePowerHold());
+
     ESP_LOGI(
         logTag,
         "Sticky Lotus firmware starting"

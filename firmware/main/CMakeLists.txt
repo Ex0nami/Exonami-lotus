@@ -10,6 +10,7 @@ idf_component_register(
         "../../assets/icons/poison.h"
 
         REQUIRES
+            board
             nvs_flash
             sticky_lotus_platform
             battery_service
