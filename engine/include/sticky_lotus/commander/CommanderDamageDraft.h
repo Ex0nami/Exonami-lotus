@@ -1,289 +1,62 @@
 #pragma once
-
 #include "sticky_lotus/GameState.h"
-
 #include <algorithm>
 #include <array>
 #include <chrono>
-#include <cstddef>
-
 namespace sticky_lotus::commander {
-
-/**
- * Temporärer Bearbeitungszustand des Commander-Damage-Screens.
- *
- * Während der Screen geöffnet ist, werden nur editedDamage_
- * verändert. Erst beim Commit werden die Änderungen in den
- * eigentlichen GameState übertragen.
- */
-class CommanderDamageDraft
-{
+class CommanderDamageDraft {
 public:
-    static constexpr std::size_t maximumPlayerCount = 4;
-
-    /**
-     * Lädt den aktuellen Commander Damage eines Empfängers.
-     */
-    void begin(
-        const GameState& game,
-        const std::size_t receivingPlayer
-    )
-    {
-        receivingPlayer_ = receivingPlayer;
-        playerCount_ = game.getPlayerCount();
-        active_ = receivingPlayer < playerCount_;
-
-        originalDamage_.fill(0);
-        editedDamage_.fill(0);
-
-        damageDelta_.fill(0);
-        hasDamageDeltaHighlight_.fill(false);
-
-        if (!active_) {
-            return;
-        }
-
-        for (
-            std::size_t attacker = 0;
-            attacker < playerCount_;
-            ++attacker
-        ) {
-            if (attacker == receivingPlayer_) {
-                continue;
-            }
-
-            const int damage =
-                game.getCommanderDamage(
-                    attacker,
-                    receivingPlayer_
-                );
-
-            originalDamage_[attacker] = damage;
-            editedDamage_[attacker] = damage;
+    static constexpr std::size_t maximumPlayerCount=4;
+    void begin(const GameState& game, std::size_t receiver) {
+        receivingPlayer_=receiver; playerCount_=game.getPlayerCount(); active_=receiver<playerCount_;
+        original_.fill(0); edited_.fill(0); delta_.fill(0); highlight_.fill(false); selected_.fill(0); partners_.fill(false);
+        if(!active_) return;
+        for(std::size_t a=0;a<playerCount_;++a) {
+            partners_[a]=game.hasPartners(a);
+            for(std::size_t c=0;c<2;++c) original_[a*2+c]=edited_[a*2+c]=game.getCommanderDamage(a,receiver,c);
         }
     }
-
-    /**
-     * Verändert den temporären Schaden einer Quelle.
-     */
-    void changeDamage(
-        const std::size_t attackingPlayer,
-        const int amount
-    )
-    {
-        if (
-            !active_ ||
-            attackingPlayer >= playerCount_ ||
-            attackingPlayer == receivingPlayer_
-        ) {
-            return;
-        }
-
-        const int before =
-            editedDamage_[attackingPlayer];
-
-        editedDamage_[attackingPlayer] =
-            std::max(
-                0,
-                editedDamage_[attackingPlayer] + amount
-            );
-
-        const int appliedChange =
-            editedDamage_[attackingPlayer] - before;
-
-        if (appliedChange != 0) {
-            damageDelta_[attackingPlayer] +=
-                appliedChange;
-
-            hasDamageDeltaHighlight_[attackingPlayer] =
-                damageDelta_[attackingPlayer] != 0;
-
-            damageDeltaTimestamp_[attackingPlayer] =
-                std::chrono::steady_clock::now();
-        }
+    bool hasPartners(std::size_t a) const {return a<playerCount_ && partners_[a];}
+    std::size_t selectedCommander(std::size_t a) const {return a<playerCount_ ? selected_[a] : 0;}
+    void selectCommander(std::size_t a,std::size_t c) {if(active_ && a<playerCount_ && c<2 && (c==0 || partners_[a])) selected_[a]=c;}
+    void changeDamage(std::size_t a,int amount) {
+        if(!active_ || a>=playerCount_) return;
+        const auto i=index(a); const int before=edited_[i];
+        edited_[i]=static_cast<int>(std::clamp<long long>(static_cast<long long>(before)+amount,0,2147483647));
+        delta_[i]+=edited_[i]-before; highlight_[i]=delta_[i]!=0;
+        timestamp_[i]=std::chrono::steady_clock::now();
     }
-
-    /*
-     * Analog zu GameState::hasLifeDeltaHighlight() / getLifeDelta(),
-     * aber für die Schadensänderung eines einzelnen Angreifers
-     * innerhalb dieses Drafts - kurzlebige UI-Rückmeldung, die nicht
-     * über begin()/commit() hinaus erhalten bleiben muss.
-     */
-    [[nodiscard]]
-    bool hasDamageDeltaHighlight(
-        const std::size_t attackingPlayer
-    ) const
-    {
-        if (attackingPlayer >= maximumPlayerCount) {
-            return false;
+    bool hasDamageDeltaHighlight(std::size_t a) const {return a<playerCount_ && highlight_[index(a)];}
+    int getDamageDelta(std::size_t a) const {return a<playerCount_ ? delta_[index(a)] : 0;}
+    std::chrono::steady_clock::time_point getDamageDeltaTimestamp(std::size_t a) const {return a<playerCount_ ? timestamp_[index(a)] : std::chrono::steady_clock::time_point{};}
+    void clearDamageDeltaHighlight(std::size_t a) {if(a<playerCount_) {delta_[index(a)]=0;highlight_[index(a)]=false;}}
+    void commit(GameState& game) {
+        if(!active_) return;
+        for(std::size_t a=0;a<playerCount_;++a) for(std::size_t c=0;c<(partners_[a]?2u:1u);++c) {
+            const int difference=edited_[a*2+c]-original_[a*2+c];
+            if(difference) game.changeCommanderDamage(a,receivingPlayer_,difference,c);
         }
-
-        return hasDamageDeltaHighlight_[attackingPlayer];
+        active_=false;
     }
-
-    [[nodiscard]]
-    int getDamageDelta(
-        const std::size_t attackingPlayer
-    ) const
-    {
-        if (attackingPlayer >= maximumPlayerCount) {
-            return 0;
-        }
-
-        return damageDelta_[attackingPlayer];
-    }
-
-    [[nodiscard]]
-    std::chrono::steady_clock::time_point getDamageDeltaTimestamp(
-        const std::size_t attackingPlayer
-    ) const
-    {
-        if (attackingPlayer >= maximumPlayerCount) {
-            return {};
-        }
-
-        return damageDeltaTimestamp_[attackingPlayer];
-    }
-
-    void clearDamageDeltaHighlight(
-        const std::size_t attackingPlayer
-    )
-    {
-        if (attackingPlayer >= maximumPlayerCount) {
-            return;
-        }
-
-        damageDelta_[attackingPlayer] = 0;
-        hasDamageDeltaHighlight_[attackingPlayer] = false;
-    }
-
-    /**
-     * Überträgt die Differenzen in den GameState.
-     *
-     * GameState verändert dabei gleichzeitig die Lebenspunkte
-     * des Empfängers.
-     */
-    void commit(GameState& game)
-    {
-        if (!active_) {
-            return;
-        }
-
-        for (
-            std::size_t attacker = 0;
-            attacker < playerCount_;
-            ++attacker
-        ) {
-            if (attacker == receivingPlayer_) {
-                continue;
-            }
-
-            const int difference =
-                editedDamage_[attacker] -
-                originalDamage_[attacker];
-
-            if (difference == 0) {
-                continue;
-            }
-
-            game.changeCommanderDamage(
-                attacker,
-                receivingPlayer_,
-                difference
-            );
-        }
-
-        active_ = false;
-    }
-
-    /**
-     * Verwirft alle Änderungen.
-     */
-    void cancel()
-    {
-        active_ = false;
-    }
-
-    [[nodiscard]]
-    bool isActive() const
-    {
-        return active_;
-    }
-
-    [[nodiscard]]
-    std::size_t receivingPlayer() const
-    {
-        return receivingPlayer_;
-    }
-
-    [[nodiscard]]
-    std::size_t playerCount() const
-    {
-        return playerCount_;
-    }
-
-    [[nodiscard]]
-    int damageFrom(
-        const std::size_t attackingPlayer
-    ) const
-    {
-        if (attackingPlayer >= playerCount_) {
-            return 0;
-        }
-
-        return editedDamage_[attackingPlayer];
-    }
-    [[nodiscard]]
- bool isLethal() const
-    {
-        if (!active_) {
-            return false;
-        }
-
-        for (
-            std::size_t attacker = 0;
-            attacker < playerCount_;
-            ++attacker
-        ) {
-            if (attacker == receivingPlayer_) {
-                continue;
-            }
-
-            /*
-             * Commander Damage wird pro gegnerischem Commander
-             * getrennt geprüft.
-             *
-             * Mehrere unterschiedliche Commander werden für die
-             * Niederlage nicht zusammengerechnet.
-             */
-            if (editedDamage_[attacker] >= 21) {
-                return true;
-            }
-        }
-
+    void cancel() {active_=false;}
+    bool isActive() const {return active_;}
+    std::size_t receivingPlayer() const {return receivingPlayer_;}
+    std::size_t playerCount() const {return playerCount_;}
+    int damageFrom(std::size_t a) const {return a<playerCount_ ? edited_[index(a)] : 0;}
+    bool isLethal() const {
+        if(!active_) return false;
+        for(std::size_t a=0;a<playerCount_;++a) for(std::size_t c=0;c<(partners_[a]?2u:1u);++c)
+            if(edited_[a*2+c]>=21) return true;
         return false;
     }
-
 private:
-    bool active_ = false;
-
-    std::size_t receivingPlayer_ = 0;
-    std::size_t playerCount_ = 0;
-
-    std::array<int, maximumPlayerCount>
-        originalDamage_{};
-
-    std::array<int, maximumPlayerCount>
-        editedDamage_{};
-
-    std::array<int, maximumPlayerCount>
-        damageDelta_{};
-
-    std::array<bool, maximumPlayerCount>
-        hasDamageDeltaHighlight_{};
-
-    std::array<std::chrono::steady_clock::time_point, maximumPlayerCount>
-        damageDeltaTimestamp_{};
+    std::size_t index(std::size_t a) const {return a*2+selected_[a];}
+    bool active_=false;
+    std::size_t receivingPlayer_=0,playerCount_=0;
+    std::array<bool,4> partners_{};
+    std::array<std::size_t,4> selected_{};
+    std::array<int,8> original_{},edited_{},delta_{};
+    std::array<bool,8> highlight_{};
+    std::array<std::chrono::steady_clock::time_point,8> timestamp_{};
 };
-
-} // namespace sticky_lotus::commander
+}

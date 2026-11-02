@@ -61,12 +61,15 @@ struct RecordedCanvas : Canvas {
     }
 };
 #include "profile-tests.h"
+#include "sticky_lotus/screens/CommanderDamageScreen.h"
+#include "commander-tests.h"
 int main() {
  try {
 #ifndef STICKY_HEADLESS_TEST
     SetConfigFlags(FLAG_WINDOW_HIDDEN);
 #endif
     RecordedCanvas canvas;
+    commanderTests(canvas);
     {
         sticky_lotus::GameState game;
         app::NavigationState nav;

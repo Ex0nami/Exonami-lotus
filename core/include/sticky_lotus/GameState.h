@@ -34,7 +34,7 @@ struct Player
 /*
  * Spielstand für Deep-Sleep.
  */
-struct GameSnapshot
+struct GameSnapshotV1
 {
     static constexpr std::uint32_t validMagic =
         0x534C4F54; // "SLOT"
@@ -65,6 +65,12 @@ struct GameSnapshot
         >,
         maximumPlayerCount
     > commanderDamage{};
+};
+
+// Keep the v1 byte layout available for migration from existing NVS saves.
+struct GameSnapshot : GameSnapshotV1 {
+    std::array<std::uint32_t, maximumPlayerCount> partners{};
+    std::array<std::array<int, maximumPlayerCount>, maximumPlayerCount> partnerDamage{};
 };
 
 class GameState
@@ -128,14 +134,17 @@ public:
     void changeCommanderDamage(
         std::size_t attackerIndex,
         std::size_t defenderIndex,
-        int amount
+        int amount, std::size_t commander = 0
     );
 
     [[nodiscard]]
     int getCommanderDamage(
         std::size_t attackerIndex,
-        std::size_t defenderIndex
+        std::size_t defenderIndex, std::size_t commander = 0
     ) const;
+
+    bool hasPartners(std::size_t seat) const { return seat < maximumPlayerCount && partners_[seat]; }
+    bool setPartners(std::size_t seat, bool enabled);
 
     void changePoison(
         std::size_t playerIndex,
@@ -284,6 +293,8 @@ private:
         >,
         maximumPlayerCount
     > commanderDamage_{};
+    std::array<std::uint32_t, maximumPlayerCount> partners_{};
+    std::array<std::array<int, maximumPlayerCount>, maximumPlayerCount> partnerDamage_{};
 
     void resetCommanderDamage();
 

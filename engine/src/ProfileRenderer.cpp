@@ -72,7 +72,11 @@ void AppRenderer::drawProfiles(const GameState& game,const ProfileView& v) {
     using Mode=ProfileView::Mode;
 
         const bool select=v.mode==Mode::Select;
-        text(select?"Select player":"Players & scores",{30,10,740,42},30);
+        text(select?"Select player":"Players & scores",{30,10,select?410.0F:740.0F,42},30);
+        if(select) {
+            canvas_.drawRect(partnerToggle(),2,Ink::Black);
+            text(game.hasPartners(v.seat)?"Partner commanders: ON":"Partner commanders: OFF",partnerToggle(),20);
+        }
         text(v.error.empty()?(select?"Choose a name for this seat":"Tap a name to rename"):v.error.c_str(),{30,52,740,28},18);
         for(int row=0;row<5;++row) {
             const int id=v.page*5+row; if(id>=static_cast<int>(game.profiles.size())) break;

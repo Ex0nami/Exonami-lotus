@@ -249,76 +249,38 @@ namespace sticky_lotus
         hasPoisonDeltaHighlight_.fill(false);
     }
 
-    void GameState::changeCommanderDamage(
-        const std::size_t attackerIndex,
-        const std::size_t defenderIndex,
-        const int amount
-    )
-    {
-        if (
-            attackerIndex >= getPlayerCount() ||
-            defenderIndex >= getPlayerCount() ||
-            attackerIndex == defenderIndex
-        )
-        {
-            return;
-        }
-
-        int& damage =
-            commanderDamage_[
-                attackerIndex
-            ][
-                defenderIndex
-            ];
-
-        const int previousDamage =
-            damage;
-
-        damage =
-            std::max(
-                0,
-                damage + amount
-            );
-
-        const int actualChange =
-            damage - previousDamage;
-        if (actualChange != 0)
-            history_.add({HistoryKind::Commander, static_cast<int>(defenderIndex), static_cast<int>(attackerIndex), previousDamage, damage});
-
-        players_[defenderIndex].life =
-            std::max(
-                0,
-                players_[defenderIndex].life -
-                actualChange
-            );
-
-        updateEliminationState(
-            defenderIndex
-        );
+    bool GameState::setPartners(std::size_t seat, bool enabled) {
+        if(seat >= getPlayerCount()) return false;
+        // Never hide damage already recorded for B. Reset the game first.
+        if(!enabled) for(int value:partnerDamage_[seat]) if(value) return false;
+        partners_[seat]=enabled ? 1u : 0u;
+        profiles.changed();
+        return true;
     }
-
-    int GameState::getCommanderDamage(
-        const std::size_t attackerIndex,
-        const std::size_t defenderIndex
-    ) const
-    {
-        if (
-            attackerIndex >= getPlayerCount() ||
-            defenderIndex >= getPlayerCount()
-        )
-        {
-            return 0;
-        }
-
-        return commanderDamage_[
-            attackerIndex
-        ][
-            defenderIndex
-        ];
+    void GameState::changeCommanderDamage(std::size_t attackerIndex,
+        std::size_t defenderIndex, int amount, std::size_t commander) {
+        if(attackerIndex>=getPlayerCount() || defenderIndex>=getPlayerCount() ||
+           commander>1 || (commander==1 && !hasPartners(attackerIndex))) return;
+        int& damage=(commander ? partnerDamage_ : commanderDamage_)[attackerIndex][defenderIndex];
+        const int before=damage;
+        damage=static_cast<int>(std::clamp<long long>(static_cast<long long>(damage)+amount,0,2147483647));
+        const int delta=damage-before;
+        if(delta) history_.add({HistoryKind::Commander,static_cast<int>(defenderIndex),
+            static_cast<int>(attackerIndex),before,damage,
+            hasPartners(attackerIndex) ? (commander ? 1u : 2u) : 0u});
+        players_[defenderIndex].life=static_cast<int>(std::clamp<long long>(
+            static_cast<long long>(players_[defenderIndex].life)-delta,0,2147483647));
+        updateEliminationState(defenderIndex);
+    }
+    int GameState::getCommanderDamage(std::size_t attackerIndex,
+        std::size_t defenderIndex, std::size_t commander) const {
+        if(attackerIndex>=getPlayerCount() || defenderIndex>=getPlayerCount() || commander>1) return 0;
+        return (commander ? partnerDamage_ : commanderDamage_)[attackerIndex][defenderIndex];
     }
 
     void GameState::resetCommanderDamage()
     {
+        for(auto& row:partnerDamage_) row.fill(0);
         for (
             auto& attackerValues :
             commanderDamage_
@@ -343,17 +305,12 @@ namespace sticky_lotus
             ++attackingPlayer
         )
         {
-            if (attackingPlayer == playerIndex)
-            {
-                continue;
-            }
-
             if (
                 commanderDamage_[
                     attackingPlayer
                 ][
                     playerIndex
-                ] >= 21
+                ] >= 21 || partnerDamage_[attackingPlayer][playerIndex] >= 21
             )
             {
                 return EliminationReason::CommanderDamage;
@@ -611,8 +568,9 @@ namespace sticky_lotus
                 .lastEliminationReason;
         }
 
-        snapshot.commanderDamage =
-            commanderDamage_;
+        snapshot.commanderDamage = commanderDamage_;
+        snapshot.partners = partners_;
+        snapshot.partnerDamage = partnerDamage_;
 
         return snapshot;
     }
@@ -629,6 +587,15 @@ namespace sticky_lotus
             return false;
         }
 
+        for(std::size_t a=0;a<maximumPlayerCount;++a) {
+            if(snapshot.partners[a]>1) return false;
+            for(std::size_t d=0;d<maximumPlayerCount;++d)
+                if(snapshot.commanderDamage[a][d]<0 || snapshot.partnerDamage[a][d]<0 ||
+                   (!snapshot.partners[a] && snapshot.partnerDamage[a][d])) return false;
+        }
+        commanderDamage_=snapshot.commanderDamage;
+        partnerDamage_=snapshot.partnerDamage;
+        partners_=snapshot.partners;
         history_.clear();
         settings_ =
             snapshot.settings;

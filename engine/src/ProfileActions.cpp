@@ -65,6 +65,12 @@ void Application::handleProfileInput(const input::InputFrame& input) {
         }
         v.error.clear();draw();return;
     }
+    if(v.mode==Mode::Select && ui::AppRenderer::partnerToggle().contains(p)) {
+        if(!game_.setPartners(v.seat,!game_.hasPartners(v.seat)))
+            v.error="Reset game before disabling recorded partner damage.";
+        else v.error.clear();
+        draw();return;
+    }
     if(footer(2)) {back();return;}
     if(footer(0) && game_.profiles.size()<32) {
         keyboardReturn_=v.mode;v.mode=Mode::Keyboard;v.editing=-1;v.text.clear();v.error.clear();v.upper=true;draw();return;

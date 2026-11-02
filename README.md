@@ -8,6 +8,7 @@ Custom version **1.3**, based on [Sticky Lotus by inkOne](https://github.com/ink
 - Signed cumulative life changes that disappear after four seconds without another change.
 - Swipe down to ping opponents for one life; swipe up within four seconds to undo the latest ping. After that, swipe up opens poison.
 - Commander damage and poison functions retained, with labels and arrows removed from the main screen.
+- Own-commander damage and optional partner commanders: toggle partners in the player-name menu, then use separate A/B damage counters. Single commander is the default.
 - Middle hardware button rolls a die or flips a coin; hold to choose D6, D20 or coin. Bottom button selects the first player.
 - Tap the centre icon for Settings; long-press for the last ten actions.
 - Tap a name above life to select a saved player. Settings includes player names, win scores and a winner prompt on Reset.

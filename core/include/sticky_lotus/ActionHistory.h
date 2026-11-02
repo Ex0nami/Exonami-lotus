@@ -33,7 +33,7 @@ public:
             const auto& e=saved.entries[i];
             if(static_cast<std::uint32_t>(e.kind)>static_cast<std::uint32_t>(HistoryKind::FirstPlayer) ||
                e.player<0 || e.player>3 || e.other<0 || e.other>20 || e.before<0 || e.after<0 || e.affected>15) return false;
-            if(e.kind==HistoryKind::Commander && (e.other>3 || e.other==e.player)) return false;
+            if(e.kind==HistoryKind::Commander && (e.other>3 || e.affected>2)) return false;
             if(e.kind==HistoryKind::Dice && ((e.other!=2 && e.other!=6 && e.other!=20) || e.after<1 || e.after>e.other)) return false;
             if((e.kind==HistoryKind::Ping || e.kind==HistoryKind::UndoPing) &&
                (e.affected==0 || (e.affected & (1u<<e.player)))) return false;
@@ -75,7 +75,7 @@ public:
         case HistoryKind::Poison:
             player(e.player); out += " Poison: "; totals(); break;
         case HistoryKind::Commander:
-            player(e.other); out += " -> "; player(e.player); out += " Commander: "; totals(); break;
+            player(e.other); if(e.affected) out += e.affected==1 ? " B" : " A"; out += " -> "; player(e.player); out += " Commander: "; totals(); break;
         case HistoryKind::Ping:
         case HistoryKind::UndoPing: {
             player(e.player); out += e.kind==HistoryKind::Ping ? " Ping: " : " Undo ping: ";

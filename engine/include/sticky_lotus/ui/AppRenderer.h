@@ -46,6 +46,15 @@ namespace sticky_lotus::ui
         static Rect profilesButtonArea() { return {515,240,240,44}; }
         static Rect profileRow(int row) { return {60,85.0F+row*49,680,43}; }
         static Rect profileFooter(int col) { return {40.0F+col*245,405,230,48}; }
+        static Rect partnerToggle() { return {460,8,310,44}; }
+        Rect commanderSelector(std::size_t source,std::size_t receiver,std::size_t count,std::size_t commander) const {
+            const auto a=getPlayerRectangle(source,count);
+            const bool rotated=isPlayerUpsideDown(receiver,count);
+            // The wide three-player seat must leave the centre menu unobstructed.
+            const float center=a.x+a.width*(a.width>500 ? 0.25F : 0.5F);
+            return {center-90+static_cast<float>(rotated ? 1-commander : commander)*90,
+                rotated ? a.y+a.height-46 : a.y+6,86,38};
+        }
         static Rect profileNav(int col) { return {40.0F+col*245,342,230,45}; }
         static Rect keyboardKey(int row,int col) { return {40.0F+col*72,140.0F+row*48,68,44}; }
         static Rect playerNameArea(std::size_t seat,std::size_t count) {

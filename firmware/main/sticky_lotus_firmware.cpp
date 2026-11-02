@@ -242,13 +242,15 @@ namespace sticky_lotus_firmware
          */
         // One NVS blob keeps the awarded win and new game together across power loss.
         // Static storage avoids adding a large snapshot to the small UI task stack.
-        struct SavedSession {
+        template<class Snapshot> struct SessionData {
             std::uint32_t magic = 0x53455331;
             sticky_lotus::ProfileSnapshot profiles;
-            sticky_lotus::GameSnapshot game;
+            Snapshot game;
             sticky_lotus::HistorySnapshot history;
             std::int32_t diceSides = 6;
         };
+        using SavedSessionV1 = SessionData<sticky_lotus::GameSnapshotV1>;
+        using SavedSession = SessionData<sticky_lotus::GameSnapshot>;
         esp_err_t saveGameState(const sticky_lotus::app::Application& application)
         {
             static SavedSession saved;
@@ -259,7 +261,7 @@ namespace sticky_lotus_firmware
             nvs_handle_t handle{};
             esp_err_t result=nvs_open(gameStateNamespace,NVS_READWRITE,&handle);
             if(result!=ESP_OK) return result;
-            result=nvs_set_blob(handle,"session_v1",&saved,sizeof(saved));
+            result=nvs_set_blob(handle,"session_v2",&saved,sizeof(saved));
             if(result==ESP_OK) result=nvs_commit(handle);
             nvs_close(handle);
             return result;
@@ -288,7 +290,20 @@ namespace sticky_lotus_firmware
 
             static SavedSession saved;
             std::size_t savedSize=sizeof(saved);
-            const auto sessionResult=nvs_get_blob(handle,"session_v1",&saved,&savedSize);
+            auto sessionResult=nvs_get_blob(handle,"session_v2",&saved,&savedSize);
+            if(sessionResult==ESP_ERR_NVS_NOT_FOUND) {
+                static SavedSessionV1 previous;
+                std::size_t oldSize=sizeof(previous);
+                sessionResult=nvs_get_blob(handle,"session_v1",&previous,&oldSize);
+                if(sessionResult==ESP_OK) {
+                    if(oldSize!=sizeof(previous) || previous.magic!=0x53455331) {nvs_close(handle);return ESP_ERR_INVALID_SIZE;}
+                    saved.magic=previous.magic; saved.game.partners.fill(0);
+                    for(auto& row:saved.game.partnerDamage) row.fill(0);
+                    saved.profiles=previous.profiles; saved.history=previous.history; saved.diceSides=previous.diceSides;
+                    static_cast<sticky_lotus::GameSnapshotV1&>(saved.game)=previous.game;
+                    savedSize=sizeof(saved);
+                }
+            }
             if(sessionResult!=ESP_ERR_NVS_NOT_FOUND) {
                 nvs_close(handle);
                 if(sessionResult!=ESP_OK) return sessionResult;
@@ -299,7 +314,7 @@ namespace sticky_lotus_firmware
                 return ESP_OK;
             }
             // Migration: existing Sticky saves did not include player profiles.
-            sticky_lotus::GameSnapshot snapshot{};
+            sticky_lotus::GameSnapshotV1 snapshot{};
 
             std::size_t size =
                 sizeof(snapshot);
@@ -333,11 +348,9 @@ namespace sticky_lotus_firmware
                 return ESP_ERR_INVALID_SIZE;
             }
 
-            if (
-                !application.restoreGameSnapshot(
-                    snapshot
-                )
-            )
+            static sticky_lotus::GameSnapshot migrated;
+            migrated={}; static_cast<sticky_lotus::GameSnapshotV1&>(migrated)=snapshot;
+            if (!application.restoreGameSnapshot(migrated))
             {
                 return ESP_ERR_INVALID_STATE;
             }

@@ -2504,152 +2504,20 @@ namespace sticky_lotus::ui
         /*
          * Empfänger des Commander Damage.
          */
-        if (playerIndex == receivingPlayer)
-        {
-            if (draft.isLethal())
-            {
-                const Rect skullIconArea = {
-                    playerArea.x +
-                    playerArea.width / 2.0F -
-                    static_cast<float>(SKULL_ICON_WIDTH) / 2.0F,
-
-                    playerArea.y +
-                    playerArea.height / 2.0F -
-                    static_cast<float>(SKULL_ICON_HEIGHT) / 2.0F,
-
-                    static_cast<float>(SKULL_ICON_WIDTH),
-                    static_cast<float>(SKULL_ICON_HEIGHT)
-                };
-
-                canvas_.drawMonochromeBitmap(
-                    skull_icon,
-                    SKULL_ICON_WIDTH,
-                    SKULL_ICON_HEIGHT,
-                    SKULL_ICON_BYTES_PER_ROW,
-                    skullIconArea,
-                    rotation
-                );
-
-                canvas_.drawText(
-                    "LETHAL",
-                    {
-                        playerArea.x + 20.0F,
-                        outwardOffsetFromEdge(
-                            playerArea,
-                            upsideDown,
-                            55.0F
-                        ),
-                        playerArea.width - 40.0F,
-                        35.0F
-                    },
-                    18,
-                    Ink::Black,
-                    TextAlignment::Center,
-                    rotation
-                );
+        if(draft.hasPartners(playerIndex)) {
+            for(std::size_t c=0;c<2;++c) {
+                const auto box=commanderSelector(playerIndex,receivingPlayer,playerCount,c);
+                const bool selected=draft.selectedCommander(playerIndex)==c;
+                canvas_.fillRect(box,selected?Ink::Black:Ink::White);
+                canvas_.drawRect(box,1,Ink::Black);
+                canvas_.drawText(c==0?"A":"B",box,22,selected?Ink::White:Ink::Black,TextAlignment::Center,rotation);
             }
-            else
-            {
-                canvas_.drawText(
-                    "",
-                    {
-                        playerArea.x + 20.0F,
-                        playerArea.y + 35.0F,
-                        playerArea.width - 40.0F,
-                        35.0F
-                    },
-                    24,
-                    Ink::Black,
-                    TextAlignment::Center,
-                    rotation
-                );
-
-                canvas_.drawText(
-                    "COMMANDER DAMAGE",
-                    {
-                        playerArea.x + 20.0F,
-                        /*
-                         * Bewusst "inward" (Richtung Mitte/
-                         * Menü-Button) - die Überschrift bleibt
-                         * damit für beide Ausrichtungen auf
-                         * derselben relativen Seite wie der
-                         * Hinweistext unten (outward).
-                         */
-                        outwardOffsetFromEdge(
-                            playerArea,
-                            !upsideDown,
-                            72.0F
-                        ),
-                        playerArea.width - 40.0F,
-                        35.0F
-                    },
-                    24,
-                    Ink::Black,
-                    TextAlignment::Center,
-                    rotation
-                );
-
-                {
-                    const float swipeHintY =
-                        outwardOffsetFromEdge(
-                            playerArea,
-                            upsideDown,
-                            70.0F
-                        );
-
-                    drawTriangleLeft(
-                        {
-                            playerArea.x + 20.0F,
-                            swipeHintY + 10.5F,
-                            14.0F,
-                            14.0F
-                        },
-                        Ink::DarkGray
-                    );
-
-                    canvas_.drawText(
-                        "Swipe left or right to save",
-                        {
-                            playerArea.x + 40.0F,
-                            swipeHintY,
-                            playerArea.width - 80.0F,
-                            35.0F
-                        },
-                        20,
-                        Ink::DarkGray,
-                        TextAlignment::Center,
-                        rotation
-                    );
-
-                    drawTriangleRight(
-                        {
-                            playerArea.x +
-                            playerArea.width -
-                            34.0F,
-
-                            swipeHintY + 10.5F,
-                            14.0F,
-                            14.0F
-                        },
-                        Ink::DarkGray
-                    );
-                }
-            }
-
-            /*
-             * Wichtig:
-             * Nicht nur invalidate(), sondern den Refresh
-             * auch wirklich vormerken.
-             *
-             * Gleichzeitig werden Batterie/Menu-Overlay
-             * wieder über das Spielerfeld gezeichnet.
-             */
-            redrawStatusOverlay(
-                playerArea
-            );
-
-            return;
         }
+        char sourceLabel[]="Player 1 commander";
+        sourceLabel[7]=static_cast<char>('1'+playerIndex);
+        canvas_.drawText(playerIndex==receivingPlayer ? (draft.isLethal()?"Own commander / LETHAL":"Own commander") : sourceLabel,
+            {playerArea.x+65,upsideDown?playerArea.y+6:playerArea.y+playerArea.height-32,playerArea.width-130,26},
+            18,Ink::Black,TextAlignment::Center,rotation);
 
         /*
          * Damage-Quellspieler.

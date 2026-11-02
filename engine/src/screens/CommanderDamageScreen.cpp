@@ -112,10 +112,6 @@ void CommanderDamageScreen::processTap(
         ++attackingPlayer
     )
     {
-        if (attackingPlayer == receivingPlayer)
-        {
-            continue;
-        }
 
         /*
          * Das komplette Spielerfeld des Angreifers
@@ -133,6 +129,14 @@ void CommanderDamageScreen::processTap(
         if (!playerArea.contains(position))
         {
             continue;
+        }
+
+        if(context_.commanderDraft.hasPartners(attackingPlayer)) {
+            for(std::size_t c=0;c<2;++c) if(context_.renderer.commanderSelector(attackingPlayer,receivingPlayer,playerCount,c).contains(position)) {
+                context_.commanderDraft.selectCommander(attackingPlayer,c);
+                context_.renderer.drawCommanderDamageRegion(context_.game,context_.commanderDraft,attackingPlayer);
+                context_.renderer.flush(); return;
+            }
         }
 
         /*
