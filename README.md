@@ -7,7 +7,7 @@ Custom version **1.4**, based on [Sticky Lotus by inkOne](https://github.com/ink
 - Track damage from your own commander.
 - Enable partner commanders in the player-name menu; A and B have separate damage counters. Single commander remains the default.
 - Move a saved player directly to another seat. Their previous seat becomes Player 1, Player 2, etc.
-- Includes the battery-power startup fix.
+- Includes the battery-power startup fix from 1.3.1.
 - Keeps existing saved names, scores and games when upgrading without erasing saved data.
 
 See [CHANGELOG.md](CHANGELOG.md) for release notes.

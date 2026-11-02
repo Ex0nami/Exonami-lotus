@@ -1,106 +1,46 @@
 # Changelog
 
-## 1.4 — 2026-11-02
+## 1.4 - 2026-11-02
 
-### What's new
+- Track damage from your own commander.
+- Enable partner commanders in the player-name menu, with separate A/B damage counters. Single commander remains the default.
+- Move a saved player directly to another seat; the previous seat becomes its numbered guest placeholder.
+- Preserve existing names, scores and games when upgrading without erasing saved data.
 
-- **Own commander damage:** record damage from your own commander, including when another player controls it.
-- **Partner commanders:** toggle partners in the player-name menu. Track commanders A and B separately, each with its own 21-damage limit. Single commander is the default, with no extra prompt.
-- **Move players between seats:** selecting an already-seated player moves them directly to the chosen seat. The previous seat becomes its numbered guest placeholder; players are not swapped. Wins stay with the profile; life totals and commander settings stay with the seat.
-- **Battery startup fix:** enable the power latch on every startup, fixing the observed freeze when USB was disconnected.
+[Source milestone](https://github.com/Ex0nami/Exonami-lotus/commit/55a2ec7).
 
-### Saved games
+## 1.3.1 - 2026-10-26
 
-Existing names, scores, history and game data migrate to the new save format. Existing commander damage becomes commander A's damage. Update without erasing NVS to retain saved data. Turning partners off is blocked while commander B has recorded damage; correct it to zero or reset the game first.
-
-### Validation
-
-Desktop regression tests passed. The feature build passed firmware checks and was installed with verified startup, power-latch initialization and saved-game restoration. The 1.4 version labels were added afterward, so that installed image is not an exact build of the 1.4 release source. No new 1.4 firmware binary is included yet; device testing of the new interactions remains to be confirmed.
-
-## Battery-power fix - 2026-10-26
-
-Enabled the battery power latch at startup and wake, fixing the observed freeze when USB was disconnected. Saved games remain intact. Included in 1.4.
+- Fix freezing when USB is disconnected by enabling the battery power latch at startup and wake.
+- Keep saved names, scores and game data intact.
 
 [Source milestone](https://github.com/Ex0nami/Exonami-lotus/commit/a0109f6).
 
 ## 1.3 - 2026-10-07
 
-Added saved player names, selection and an on-screen keyboard; win scores, winner-on-reset, no-winner reset and undo last win. Saved profiles and game state together. Removed the Settings image and reduced player-menu stack use. This historical build predates the battery-power fix.
+- Add saved player names, a name-selection menu and an on-screen keyboard.
+- Add win scores, winner selection on reset, a no-winner option and undo last win.
+- Add three-player mode: one player across the top and two below.
+- Add swipe-down ping and a four-second swipe-up undo, without a temporary hint.
+- Add D6, D20 and coin flip on the middle hardware button; fix the dice-related restart.
+- Add the last ten actions, opened by holding the centre icon.
+- Add custom sleep artwork, rotated 90 degrees counterclockwise, and the Planeswalker menu icon.
+- Remove life-screen hint text and arrows and the Settings image; fix the centre-circle redraw.
+- Add manual and automatic screen cleanup, reduce unnecessary redraws and improve rendering and memory use.
 
 [Source milestone](https://github.com/Ex0nami/Exonami-lotus/commit/16d9b59).
 
-## Refresh and performance - 2026-09-20
+## 1.2 - 2026-09-15
 
-Added manual screen cleanup and automatic full refresh scheduling. Batched rapid updates, avoided redundant drawing, optimized monochrome fills and limited diagnostics.
-
-[Source milestone](https://github.com/Ex0nami/Exonami-lotus/commit/845340f).
-
-## Dice reset fix - 2026-09-18
-
-Fixed excessive stack use that could restart the device after rolling a die or flipping a coin. Verified changed life totals survive both results.
-
-[Source milestone](https://github.com/Ex0nami/Exonami-lotus/commit/b871dc0).
-
-## Action history - 2026-09-17
-
-Added the last ten actions, five per page. Long-press the centre icon for history; tap still opens Settings. History survives sleep.
-
-[Source milestone](https://github.com/Ex0nami/Exonami-lotus/commit/f3d26a5).
-
-## Centre menu icon - 2026-09-17
-
-Added the Planeswalker icon and fixed sections of its surrounding circle disappearing after player updates.
-
-[Source milestone](https://github.com/Ex0nami/Exonami-lotus/commit/53abbc3).
-
-## Dice and coin - 2026-09-17
-
-Added D6, D20 and coin flip on the middle hardware button: short press rolls, hold selects the mode. First-player roll stays on the bottom button. This initial build had a reset bug fixed September 18; it is not recommended for installation.
-
-[Source milestone](https://github.com/Ex0nami/Exonami-lotus/commit/791575c).
-
-## Three-player mode - 2026-09-16
-
-Added one player across the top and two below, with appropriately oriented controls and text.
-
-[Source milestone](https://github.com/Ex0nami/Exonami-lotus/commit/93aec63).
-
-## Ping undo - 2026-09-16
-
-Swipe up in the same seat within four seconds to undo the latest ping. Afterward swipe up opens poison. No temporary undo hint.
-
-[Source milestone](https://github.com/Ex0nami/Exonami-lotus/commit/96fc0f3).
-
-## Sleep artwork rotation - 2026-09-15
-
-Rotated the custom sleep artwork 90 degrees counterclockwise.
-
-[Source milestone](https://github.com/Ex0nami/Exonami-lotus/commit/6280332).
-
-## Custom sleep artwork - 2026-09-15
-
-Added Exonami artwork and five mana symbols, and connected it to the physical sleep-button flow.
-
-[Source milestone](https://github.com/Ex0nami/Exonami-lotus/commit/475789d).
-
-## Remove remaining arrows - 2026-09-15
-
-Removed the remaining gesture arrows from the life screen while preserving poison and Commander functions.
-
-[Source milestone](https://github.com/Ex0nami/Exonami-lotus/commit/225ad70).
-
-## Cleaner screen and ping - 2026-09-15
-
-Removed poison/Commander hint text from the life screen. Added player-relative swipe down to remove one life from other eligible players, with gesture regression tests.
-
-[Source milestone](https://github.com/Ex0nami/Exonami-lotus/commit/a95e37b).
-
-## Initial custom build - 2026-09-15
-
-Set cumulative signed life changes to expire after four seconds. Kept upstream first-player selection, fixed Windows simulator compilation, matched hold gestures and added build instructions and desktop integration tests.
+- Initial custom build based on Sticky Lotus.
+- Show cumulative signed life changes for four seconds after the last adjustment.
+- Keep the upstream first-player roll.
+- Fix Windows simulator builds, match device hold gestures and add build instructions and regression tests.
 
 [Source milestone](https://github.com/Ex0nami/Exonami-lotus/commit/b7d35db).
 
-## Upstream base and version numbering
+## Release notes
 
-Customization started from inkOne/sticky-lotus commit `1e5dc875` on September 15, 2026. The inherited tags `v1.0.1`, `v1.1.0` and `v1.1.1` belong to upstream, not Exonami edition. Earlier custom updates were unnumbered, so they are listed by date and feature rather than given invented version numbers. Internal test builds and documentation-only changes are grouped with their feature. Older builds are superseded; use the current version for new installations.
+Versions 1.2 and 1.3 group our earlier custom updates retrospectively. Version 1.3 includes the work from after the initial build through October 7; 1.3.1 contains the battery fix. Later versions include earlier fixes. The inherited v1.0.1, v1.1.0 and v1.1.1 tags belong to the original Sticky Lotus project.
+
+Source tags do not imply that a matching firmware download has been published. The installed commander feature build predates the 1.4 version-label change. The feature build passed desktop and firmware checks and verified startup/save restoration; the exact 1.4 release image and further device testing remain pending.
