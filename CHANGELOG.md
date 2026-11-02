@@ -39,8 +39,3 @@
 
 [Source milestone](https://github.com/Ex0nami/Exonami-lotus/commit/b7d35db).
 
-## Release notes
-
-Versions 1.2 and 1.3 group our earlier custom updates retrospectively. Version 1.3 includes the work from after the initial build through October 7; 1.3.1 contains the battery fix. Later versions include earlier fixes. The inherited v1.0.1, v1.1.0 and v1.1.1 tags belong to the original Sticky Lotus project.
-
-Desktop regression tests passed. The feature build passed firmware checks and was installed with verified startup, power-latch initialization and saved-game restoration.
