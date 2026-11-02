@@ -3,7 +3,7 @@ from pathlib import Path
 from elftools.elf.elffile import ELFFile
 root=Path(__file__).resolve().parents[1]
 app=(root/'firmware/build/sticky_lotus_firmware.bin').read_bytes()
-for marker in ['v1.3','session_v1','Players & scores','Who won this game?','Undo last recorded win?',
+for marker in ['v1.4','session_v1','Players & scores','Who won this game?','Undo last recorded win?',
                'Steve','Chris','Marvin','Marian','Erwin','Max','Fabi','Duki','David','Marcel','Emil']:
     assert marker.encode() in app, f'Missing firmware marker: {marker}'
 with (root/'firmware/build/sticky_lotus_firmware.elf').open('rb') as f:
@@ -18,4 +18,4 @@ with (root/'firmware/build/sticky_lotus_firmware.elf').open('rb') as f:
         size=max(sizes)
         assert size<=768, f'{name} stack frame needs review: {size} bytes'
         print(f'PASS: {name} maximum individual stack frame {size} bytes.')
-print('PASS: profiles, all eleven names, winner prompt, session storage and v1.3 linked.')
+print('PASS: profiles, all eleven names, winner prompt, session storage and v1.4 linked.')

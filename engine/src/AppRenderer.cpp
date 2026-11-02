@@ -1878,7 +1878,7 @@ namespace sticky_lotus::ui
         );
 
         canvas_.drawText(
-            "v1.3",
+            "v1.4",
             {brandingX, 325.0F, brandingWidth, 24.0F},
             16, Ink::DarkGray, TextAlignment::Center, 0.0F
         );

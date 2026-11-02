@@ -2,7 +2,7 @@ cmake_minimum_required(VERSION 3.24)
 
 project(
         sticky_lotus
-        VERSION 0.3.0
+        VERSION 1.4.0
         LANGUAGES CXX
 )
 

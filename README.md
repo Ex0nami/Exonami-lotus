@@ -1,6 +1,16 @@
 # Sticky Lotus — Exonami edition
 
-Custom version **1.3**, based on [Sticky Lotus by inkOne](https://github.com/inkOne/sticky-lotus). The original Git history and MIT license are retained.
+Custom version **1.4**, based on [Sticky Lotus by inkOne](https://github.com/inkOne/sticky-lotus). The original Git history and MIT license are retained.
+
+## What's new in 1.4
+
+- Track damage from your own commander.
+- Enable partner commanders in the player-name menu; A and B have separate damage counters. Single commander remains the default.
+- Move a saved player directly to another seat. Their previous seat becomes Player 1, Player 2, etc.
+- Includes the battery-power startup fix.
+- Keeps existing saved names, scores and games when upgrading without erasing saved data.
+
+See [CHANGELOG.md](CHANGELOG.md) for release notes.
 
 ## Custom features
 
