@@ -1,10 +1,10 @@
-# Players and scores — custom v1.3
+# Players and scores â€” custom v1.3
 
 ## Using it
 - Tap the name above a life total to choose a saved player. Names rotate with each seat in 2/3/4-player modes. The initial labels remain Player 1, Player 2, etc. until you select people.
 - Preloaded profiles: Steve, Chris, Marvin, Marian, Erwin, Max, Fabi, Duki, David, Marcel, Emil. Initial wins: zero. Existing profile saves take precedence on future boots.
-- Five names per page. Previous/Next browse the list. A person cannot occupy two active seats. Guest clears the seat assignment and uses its Player N label.
-- New player opens an on-screen keyboard. Maximum 32 saved profiles; names are 1–16 characters, using Latin letters, digits, spaces, apostrophe or hyphen. Case-insensitive duplicates are rejected. Leading/trailing spaces are trimmed. Cancel discards typing.
+- Five names per page. Previous/Next browse the list. Selecting a person already seated moves them to the selected seat. Their previous seat becomes Player N (guest); an existing occupant of the destination is unseated, not swapped. Life, counters and partner configuration stay with each seat. Guest clears the seat assignment and uses its Player N label.
+- New player opens an on-screen keyboard. Maximum 32 saved profiles; names are 1â€“16 characters, using Latin letters, digits, spaces, apostrophe or hyphen. Case-insensitive duplicates are rejected. Leading/trailing spaces are trimmed. Cancel discards typing.
 - Settings > Players & scores shows names and lifetime wins. Tap a name to rename it; wins and seat assignments follow that profile.
 - Settings > Reset asks Who won this game? Choose an active seated player to add one win and start a fresh game. Choose a guest or No winner / reset to reset without a win. Cancel returns to Settings without resetting.
 - Reset retains seats and scores. Changing player mode/starting life keeps the existing immediate-reset behaviour and does not award a win.

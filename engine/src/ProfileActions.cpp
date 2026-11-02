@@ -88,7 +88,7 @@ void Application::handleProfileInput(const input::InputFrame& input) {
         if(id>=static_cast<int>(game_.profiles.size()) || !ui::AppRenderer::profileRow(row).contains(p)) continue;
         if(v.mode==Mode::Select) {
             if(game_.profiles.assign(v.seat,id,game_.getPlayerCount())) v.mode=Mode::Closed;
-            else v.error="That player is already seated.";
+            else v.error="Could not select that player.";
         } else {
             keyboardReturn_=Mode::Scores;v.mode=Mode::Keyboard;v.editing=id;v.text=game_.profiles.at(id).name;v.error.clear();v.upper=true;
         }

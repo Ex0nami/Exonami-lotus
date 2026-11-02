@@ -82,7 +82,7 @@ void AppRenderer::drawProfiles(const GameState& game,const ProfileView& v) {
             const int id=v.page*5+row; if(id>=static_cast<int>(game.profiles.size())) break;
             const auto& p=game.profiles.at(id);
             std::strcpy(label,p.name); // Validated names contain at most 16 bytes.
-            if(select && game.profiles.used(id,v.seat,game.getPlayerCount())) std::strcat(label," (seated)");
+            if(select && game.profiles.used(id,v.seat,game.getPlayerCount())) std::strcat(label," (move here)");
             else if(!select) {
                 std::strcat(label,"   ");
                 auto end=std::to_chars(label+std::strlen(label),label+sizeof(label)-6,p.wins).ptr;

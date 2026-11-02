@@ -43,9 +43,9 @@ public:
         return false;
     }
     bool assign(std::size_t seatIndex,int id,std::size_t active) {
-        if(seatIndex>=active || active>4 || id<-1 || id>=static_cast<int>(size()) || used(id,seatIndex,active)) return false;
-        // Clear the same profile in an inactive seat so later mode changes remain unique.
-        if(id>=0) for(std::size_t i=active;i<4;++i) if(data_.seats[i]==id) data_.seats[i]=-1;
+        if(seatIndex>=active || active>4 || id<-1 || id>=static_cast<int>(size())) return false;
+        // Move a selected profile from any other seat; the old seat becomes a guest.
+        if(id>=0) for(std::size_t i=0;i<4;++i) if(i!=seatIndex && data_.seats[i]==id) data_.seats[i]=-1;
         data_.seats[seatIndex]=id; dirty_=true; return true;
     }
     bool validName(std::string_view name,int except=-1) const {

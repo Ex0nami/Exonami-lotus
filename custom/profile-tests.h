@@ -4,7 +4,15 @@ void runProfileTests(RecordedCanvas& canvas) {
     const char* expected[]={"Steve","Chris","Marvin","Marian","Erwin","Max","Fabi","Duki","David","Marcel","Emil"};
     require(profiles.size()==11,"eleven seeded profiles");
     for(int i=0;i<11;++i) require(std::string(profiles.at(i).name)==expected[i] && profiles.at(i).wins==0,"seed names and zero wins");
-    require(profiles.assign(0,0,4) && !profiles.assign(1,0,4),"duplicate seating must be rejected");
+    require(profiles.assign(0,0,4) && profiles.assign(2,2,4),"initial occupied seats");
+    profiles.win(0); profiles.saved();
+    require(profiles.assign(2,0,4) && profiles.seat(0)==-1 && profiles.seat(2)==0,"move into occupied seat without swapping");
+    require(profiles.seatName(0)=="Player 1" && profiles.at(0).wins==1 && profiles.dirty(),"guest label, wins and persistence after move");
+    PlayerProfiles moved; require(moved.restore(profiles.snapshot()) && moved.seat(0)==-1 && moved.seat(2)==0,"moved seating persists");
+    require(profiles.assign(2,0,4) && profiles.seat(2)==0,"same seat selection keeps player");
+    require(!profiles.assign(4,0,4) && profiles.seat(2)==0,"invalid move does not clear source");
+    require(profiles.assign(2,-1,4),"guest selection clears only target");
+    profiles.undo(); profiles.assign(0,0,4);
     require(profiles.assign(3,1,4) && profiles.assign(1,1,2) && profiles.seat(3)==-1,"move inactive seat without duplicate");
     require(profiles.add("steve")==-1 && profiles.add("")==-1 && profiles.add(" ")==-1 && profiles.add("12345678901234567")==-1,"name validation");
     require(profiles.win(0) && profiles.at(0).wins==1 && profiles.undo() && !profiles.undo(),"undo exactly once");
@@ -45,9 +53,14 @@ void runProfileTests(RecordedCanvas& canvas) {
     rectTap(AppRenderer::profileRow(0));
     require(application.profileSnapshot().seats[0]==0 && canvas.has("Steve",22,180),"assign name with rotation");
     require(application.createGameSnapshot().life==untouched.life,"select name preserves life");
-    nameTap(1); rectTap(AppRenderer::profileRow(0));
-    require(canvas.has("That player is already seated.",18),"duplicate assignment explains conflict");
-    rectTap(AppRenderer::profileRow(1));
+    nameTap(2); rectTap(AppRenderer::profileRow(2)); // Destination already occupied by Marvin.
+    const auto beforeMove=application.createGameSnapshot();
+    nameTap(2); rectTap(AppRenderer::profileRow(0));
+    require(application.profileSnapshot().seats[0]==-1 && application.profileSnapshot().seats[2]==0,"selecting Steve moves him to seat 3");
+    require(canvas.has("Player 1",22,180) && canvas.has("Steve",22,0),"both seat labels redraw after move");
+    require(application.createGameSnapshot().life==beforeMove.life && application.createGameSnapshot().commanderDamage==beforeMove.commanderDamage && application.createGameSnapshot().partners==beforeMove.partners,"name move leaves seat game state intact");
+    nameTap(0); rectTap(AppRenderer::profileRow(0)); // Move Steve back for remaining tests.
+    nameTap(1); rectTap(AppRenderer::profileRow(1));
     nameTap(2);rectTap(AppRenderer::profileRow(2));
     nameTap(3);rectTap(AppRenderer::profileRow(3));
     draw("profiles-game-four.png");
@@ -104,3 +117,4 @@ void runProfileTests(RecordedCanvas& canvas) {
     }
     std::cout<<"PASS: seeded profiles, unique seating, keyboard, rename, pagination, guest, winner/reset/cancel, undo, persistence validation and 2/3/4-player names.\n";
 }
+
