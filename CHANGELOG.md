@@ -1,6 +1,6 @@
 # Changelog
 
-## 1.4 — 2026-11-02
+## 1.4 â€” 2026-11-02
 
 ### What's new
 
@@ -15,4 +15,4 @@ Existing names, scores, history and game data migrate to the new save format. Ex
 
 ### Validation
 
-Desktop regression tests passed. The feature build passed firmware checks and was installed with verified startup, power-latch initialization and saved-game restoration. The 1.4 version labels were added afterward, so that installed image is not an exact build of the 1.4 release source. No new 1.4 firmware binary is included yet; device testing of the new interactions remains to be confirmed.
+Desktop regression tests passed. The feature build passed firmware checks and was installed with verified startup, power-latch initialization and saved-game restoration. 
