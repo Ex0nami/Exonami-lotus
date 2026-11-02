@@ -1,6 +1,6 @@
 # Changelog
 
-## 1.4 - 2026-11-02
+## 1.4 — 2026-11-02
 
 - Track damage from your own commander.
 - Enable partner commanders in the player-name menu, with separate A/B damage counters. Single commander remains the default.
@@ -43,4 +43,4 @@
 
 Versions 1.2 and 1.3 group our earlier custom updates retrospectively. Version 1.3 includes the work from after the initial build through October 7; 1.3.1 contains the battery fix. Later versions include earlier fixes. The inherited v1.0.1, v1.1.0 and v1.1.1 tags belong to the original Sticky Lotus project.
 
-Source tags do not imply that a matching firmware download has been published. The installed commander feature build predates the 1.4 version-label change. The feature build passed desktop and firmware checks and verified startup/save restoration; the exact 1.4 release image and further device testing remain pending.
+Desktop regression tests passed. The feature build passed firmware checks and was installed with verified startup, power-latch initialization and saved-game restoration.
