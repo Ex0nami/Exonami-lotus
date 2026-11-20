@@ -1,4 +1,4 @@
-# Sticky Lotus — Exonami edition
+# Sticky Lotus — Löwenherz edition
 
 Custom version **1.4**, based on [Sticky Lotus by inkOne](https://github.com/inkOne/sticky-lotus). The original Git history and MIT license are retained.
 
@@ -8,7 +8,8 @@ Custom version **1.4**, based on [Sticky Lotus by inkOne](https://github.com/ink
 - Enable partner commanders in the player-name menu; A and B have separate damage counters. Single commander remains the default.
 - Move a saved player directly to another seat. Their previous seat becomes Player 1, Player 2, etc.
 - Includes the battery-power startup fix from 1.3.1.
-- Keeps existing saved names, scores and games when upgrading without erasing saved data.
+- Löwenherz crest on the sleep screen and a lion on the centre button.
+- Starts with an empty player roster and uses separate saved game and profile storage from the Exonami edition.
 
 See [CHANGELOG.md](CHANGELOG.md) for release notes.
 
@@ -22,7 +23,7 @@ See [CHANGELOG.md](CHANGELOG.md) for release notes.
 - Middle hardware button rolls a die or flips a coin; hold to choose D6, D20 or coin. Bottom button selects the first player.
 - Tap the centre icon for Settings; long-press for the last ten actions.
 - Tap a name above life to select a saved player. Settings includes player names, win scores and a winner prompt on Reset.
-- New sleep artwork, a Planeswalker menu icon, manual/automatic full refreshes and rendering improvements.
+- Manual and automatic full refreshes and rendering improvements.
 
 See [current build and test instructions](custom/BUILDING.md) and [player names and scores](custom/PLAYERS-AND-SCORES.md).
 

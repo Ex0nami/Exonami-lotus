@@ -77,7 +77,10 @@ void AppRenderer::drawProfiles(const GameState& game,const ProfileView& v) {
             canvas_.drawRect(partnerToggle(),2,Ink::Black);
             text(game.hasPartners(v.seat)?"Partner commanders: ON":"Partner commanders: OFF",partnerToggle(),20);
         }
-        text(v.error.empty()?(select?"Choose a name for this seat":"Tap a name to rename"):v.error.c_str(),{30,52,740,28},18);
+        const char* subtitle = "No saved players yet";
+        if (!v.error.empty()) subtitle = v.error.c_str();
+        else if (game.profiles.size() > 0) subtitle = select ? "Choose a name for this seat" : "Tap a name to rename";
+        text(subtitle,{30,52,740,28},18);
         for(int row=0;row<5;++row) {
             const int id=v.page*5+row; if(id>=static_cast<int>(game.profiles.size())) break;
             const auto& p=game.profiles.at(id);

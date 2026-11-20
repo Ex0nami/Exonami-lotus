@@ -69,6 +69,13 @@ int main() {
     SetConfigFlags(FLAG_WINDOW_HIDDEN);
 #endif
     RecordedCanvas canvas;
+#ifndef STICKY_HEADLESS_TEST
+    canvas.beginFrame();
+    AppRenderer(canvas).drawSleepScreen();
+    rlDrawRenderBatchActive();
+    TakeScreenshot("loewenherz-sleep.png");
+    canvas.endFrame();
+#endif
     commanderTests(canvas);
     {
         sticky_lotus::GameState game;

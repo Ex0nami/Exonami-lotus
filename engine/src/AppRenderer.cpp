@@ -4,10 +4,10 @@
 #include <cstddef>
 #include <string>
 
-#include "icons/planeswalker_menu_icon.h"
+#include "icons/loewenherz_menu_icon.h"
 #include "icons/poison.h"
 #include "icons/skull_icon.h"
-#include "sleep/exonami_sleep.h"
+#include "sleep/loewenherz_sleep.h"
 
 namespace sticky_lotus::ui
 {
@@ -1405,24 +1405,24 @@ namespace sticky_lotus::ui
         );
 
         /*
-         * Planeswalker symbol centered inside the circular menu button.
+         * Löwenherz lion centered inside the circular menu button.
          */
         const Rect iconArea = {
             center.x -
-            static_cast<float>(PLANESWALKER_ICON_WIDTH) / 2.0F,
+            static_cast<float>(assets::shopMenuIconWidth) / 2.0F,
 
             center.y -
-            static_cast<float>(PLANESWALKER_ICON_HEIGHT) / 2.0F,
+            static_cast<float>(assets::shopMenuIconHeight) / 2.0F,
 
-            static_cast<float>(PLANESWALKER_ICON_WIDTH),
-            static_cast<float>(PLANESWALKER_ICON_HEIGHT)
+            static_cast<float>(assets::shopMenuIconWidth),
+            static_cast<float>(assets::shopMenuIconHeight)
         };
 
         canvas_.drawMonochromeBitmap(
-            planeswalker_icon,
-            PLANESWALKER_ICON_WIDTH,
-            PLANESWALKER_ICON_HEIGHT,
-            PLANESWALKER_ICON_BYTES_PER_ROW,
+            assets::shopMenuIcon,
+            assets::shopMenuIconWidth,
+            assets::shopMenuIconHeight,
+            assets::shopMenuIconWidth / 8,
             iconArea,
             0.0F
         );
@@ -2818,9 +2818,9 @@ namespace sticky_lotus::ui
             static_cast<float>(screenHeight)
         };
 
-        // Portrait artwork is pre-rotated clockwise into the landscape panel buffer.
+        static_assert(screenWidth == assets::shopSleepWidth && screenHeight == assets::shopSleepHeight);
         canvas_.drawMonochromeBitmap(
-            assets::exonamiSleep,
+            assets::shopSleep,
             screenWidth,
             screenHeight,
             screenWidth / 8,

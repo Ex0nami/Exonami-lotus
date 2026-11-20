@@ -25,10 +25,6 @@ class PlayerProfiles {
         return true;
     }
 public:
-    PlayerProfiles() {
-        for(const auto* name:{"Steve","Chris","Marvin","Marian","Erwin","Max","Fabi","Duki","David","Marcel","Emil"}) add(name);
-        dirty_=false;
-    }
     const ProfileSnapshot& snapshot() const { return data_; }
     bool dirty() const { return dirty_; }
     void saved() { dirty_=false; }

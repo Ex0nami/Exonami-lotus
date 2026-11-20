@@ -38,8 +38,9 @@ namespace sticky_lotus_firmware
         /*
          * Persistenter Speicherbereich für den Spielstand.
          */
+        // Keep shop games and player profiles separate from the personal edition.
         constexpr const char* gameStateNamespace =
-            "sticky_lotus";
+            "loewenherz";
 
         constexpr const char* gameStateKey =
             "game_state";

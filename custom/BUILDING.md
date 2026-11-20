@@ -1,4 +1,4 @@
-# Build the Exonami edition
+# Build the Löwenherz edition
 
 Custom development began from upstream commit `1e5dc875f1fb71e088657967f5b90f0a9f9b76ae` on 15 September 2026. Build tools are installed separately.
 
@@ -51,6 +51,7 @@ Run checks from the repository root using the ESP-IDF Python environment with py
 
 ```sh
 python custom/verify-dice-stack.py
+python custom/verify-commanders-firmware.py
 python custom/verify-history-firmware.py
 python custom/verify-menu-firmware.py
 python custom/verify-profiles-firmware.py
@@ -73,6 +74,8 @@ Replace `PORT` with the device port, for example `COM3`. Close serial monitors b
 For a first installation, `idf.py -p PORT flash` installs the complete build. Back up existing device data first. Do not erase flash if you want to preserve saved games, names and scores. Merged installation images and application-only images are not interchangeable.
 
 After installation, check life changes, dice/coin results, player layouts, sleep/wake, and saved names/scores after restarting.
+
+On first boot, the Löwenherz edition starts with a fresh game and empty roster. It saves to a separate namespace from the Exonami edition. Preserve NVS to keep each edition's own saves when switching between them.
 
 ## Where to edit
 

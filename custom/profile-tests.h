@@ -1,9 +1,11 @@
 // Included after the simulator's recording canvas definition.
 void runProfileTests(RecordedCanvas& canvas) {
     PlayerProfiles profiles;
-    const char* expected[]={"Steve","Chris","Marvin","Marian","Erwin","Max","Fabi","Duki","David","Marcel","Emil"};
-    require(profiles.size()==11,"eleven seeded profiles");
-    for(int i=0;i<11;++i) require(std::string(profiles.at(i).name)==expected[i] && profiles.at(i).wins==0,"seed names and zero wins");
+    require(profiles.size()==0 && !profiles.dirty(),"fresh shop roster is empty");
+    require(profiles.seatName(0)=="Player 1" && profiles.seatName(3)=="Player 4","fresh seats use guest labels");
+    const char* names[]={"Alex","Bea","Casey","Drew","Eli","Fran","Gia","Hayden","Indy","Jules","Kai"};
+    for(const auto* name:names) require(profiles.add(name)>=0,"create test profile");
+    const auto testRoster=profiles.snapshot();
     require(profiles.assign(0,0,4) && profiles.assign(2,2,4),"initial occupied seats");
     profiles.win(0); profiles.saved();
     require(profiles.assign(2,0,4) && profiles.seat(0)==-1 && profiles.seat(2)==0,"move into occupied seat without swapping");
@@ -14,14 +16,14 @@ void runProfileTests(RecordedCanvas& canvas) {
     require(profiles.assign(2,-1,4),"guest selection clears only target");
     profiles.undo(); profiles.assign(0,0,4);
     require(profiles.assign(3,1,4) && profiles.assign(1,1,2) && profiles.seat(3)==-1,"move inactive seat without duplicate");
-    require(profiles.add("steve")==-1 && profiles.add("")==-1 && profiles.add(" ")==-1 && profiles.add("12345678901234567")==-1,"name validation");
+    require(profiles.add("alex")==-1 && profiles.add("")==-1 && profiles.add(" ")==-1 && profiles.add("12345678901234567")==-1,"name validation");
     require(profiles.win(0) && profiles.at(0).wins==1 && profiles.undo() && !profiles.undo(),"undo exactly once");
     auto saved=profiles.snapshot(); auto bad=saved; bad.count=33;
     require(!profiles.restore(bad) && profiles.size()==11,"reject corrupt count without mutation");
     bad=saved; bad.seats[0]=99; require(!profiles.restore(bad),"reject invalid seat");
     bad=saved; bad.players[0].name[0]=0; require(!profiles.restore(bad),"reject empty name");
     bad=saved; std::memset(bad.players[0].name,'x',17); require(!profiles.restore(bad),"reject unterminated name");
-    bad=saved; std::strcpy(bad.players[1].name,"Steve"); require(!profiles.restore(bad),"reject duplicate stored names");
+    bad=saved; std::strcpy(bad.players[1].name,"Alex"); require(!profiles.restore(bad),"reject duplicate stored names");
     bad=saved; bad.lastWinner=0; require(!profiles.restore(bad),"reject invalid undo record");
     while(profiles.size()<32) require(profiles.add("Name"+std::to_string(profiles.size()))>=0,"profile capacity");
     require(profiles.add("Extra")==-1,"profile limit must be bounded");
@@ -47,26 +49,36 @@ void runProfileTests(RecordedCanvas& canvas) {
     auto scores=[&](){menu();rectTap(AppRenderer::profilesButtonArea());};
     auto reset=[&](){menu();tap(150,410);};
     draw();
+    require(canvas.has("Player 1",22,180) && canvas.has("Player 4",22,0),"fresh game renders guest names");
+    nameTap(0);
+    require(application.profileSnapshot().count==0 && canvas.has("No saved players yet",18),"empty picker has no preloaded names");
+    draw("loewenherz-empty-players.png");
+    rectTap(AppRenderer::profileFooter(0));
+    rectTap(AppRenderer::keyboardKey(1,0)); // A
+    rectTap(AppRenderer::profileFooter(0));
+    require(application.profileSnapshot().count==1 && application.profileSnapshot().seats[0]==0 &&
+            std::string(application.profileSnapshot().players[0].name)=="A","first profile can be created and assigned");
+    require(application.restoreProfiles(testRoster),"load roster for seating and pagination tests");
     const auto untouched=application.createGameSnapshot();
     nameTap(0); require(canvas.has("Select player",30),"tap name opens selector");
     draw("profiles-select.png");
     rectTap(AppRenderer::profileRow(0));
-    require(application.profileSnapshot().seats[0]==0 && canvas.has("Steve",22,180),"assign name with rotation");
+    require(application.profileSnapshot().seats[0]==0 && canvas.has("Alex",22,180),"assign name with rotation");
     require(application.createGameSnapshot().life==untouched.life,"select name preserves life");
-    nameTap(2); rectTap(AppRenderer::profileRow(2)); // Destination already occupied by Marvin.
+    nameTap(2); rectTap(AppRenderer::profileRow(2)); // Destination already occupied by Casey.
     const auto beforeMove=application.createGameSnapshot();
     nameTap(2); rectTap(AppRenderer::profileRow(0));
-    require(application.profileSnapshot().seats[0]==-1 && application.profileSnapshot().seats[2]==0,"selecting Steve moves him to seat 3");
-    require(canvas.has("Player 1",22,180) && canvas.has("Steve",22,0),"both seat labels redraw after move");
+    require(application.profileSnapshot().seats[0]==-1 && application.profileSnapshot().seats[2]==0,"selecting Alex moves him to seat 3");
+    require(canvas.has("Player 1",22,180) && canvas.has("Alex",22,0),"both seat labels redraw after move");
     require(application.createGameSnapshot().life==beforeMove.life && application.createGameSnapshot().commanderDamage==beforeMove.commanderDamage && application.createGameSnapshot().partners==beforeMove.partners,"name move leaves seat game state intact");
-    nameTap(0); rectTap(AppRenderer::profileRow(0)); // Move Steve back for remaining tests.
+    nameTap(0); rectTap(AppRenderer::profileRow(0)); // Move Alex back for remaining tests.
     nameTap(1); rectTap(AppRenderer::profileRow(1));
     nameTap(2);rectTap(AppRenderer::profileRow(2));
     nameTap(3);rectTap(AppRenderer::profileRow(3));
     draw("profiles-game-four.png");
     // Check actual regional redraw, before a full application.draw could mask an erased name.
     canvas.labels.clear();input.next.gesture={TouchGesture::Tap,{40,120},{40,120}};application.tick();
-    require(canvas.has("Steve",22,180),"regional life update must redraw name");
+    require(canvas.has("Alex",22,180),"regional life update must redraw name");
     const auto changed=application.createGameSnapshot();
     reset(); require(canvas.has("Who won this game?",30),"reset opens winner prompt");
     draw("profiles-winner.png");
@@ -91,7 +103,7 @@ void runProfileTests(RecordedCanvas& canvas) {
     rectTap(AppRenderer::profileFooter(0));
     require(application.profileSnapshot().players[0].wins==0 && application.profileSnapshot().lastWinner==-1,"undo removes one win only");
     rectTap(AppRenderer::profileNav(2)); rectTap(AppRenderer::profileNav(2));
-    require(canvas.has("Emil   0 wins",24),"last page contains final seed");
+    require(canvas.has("Kai   0 wins",24),"last page contains final test profile");
     rectTap(AppRenderer::profileFooter(0));draw("profiles-keyboard.png");
     // Enter Zoe with automatic lowercase after first letter.
     rectTap(AppRenderer::keyboardKey(2,0));rectTap(AppRenderer::keyboardKey(0,8));rectTap(AppRenderer::keyboardKey(0,2));
@@ -115,6 +127,6 @@ void runProfileTests(RecordedCanvas& canvas) {
         for(int i=0;i<count;++i) {nameTap(i,count);require(canvas.has("Select player",30),"name tappable in each layout");rectTap(AppRenderer::profileFooter(2));}
         reset();require(!canvas.has("Player 4",24),"winner list limited to current seats");rectTap(AppRenderer::profileFooter(2));tap(645,410);
     }
-    std::cout<<"PASS: seeded profiles, unique seating, keyboard, rename, pagination, guest, winner/reset/cancel, undo, persistence validation and 2/3/4-player names.\n";
+    std::cout<<"PASS: empty starting roster and player creation, unique seating, keyboard, rename, pagination, guest, winner/reset/cancel, undo, persistence validation and 2/3/4-player names.\n";
 }
 
